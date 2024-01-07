@@ -40,19 +40,25 @@ The frontend application should start at [`localhost:3000`](http://localhost:300
    npm install
    ```
 
-3. Run the migrations:
+3. Go to your DBMS:
+
+   ```bash
+   CREATE DATABASE employees;
+   ```
+
+4. Run the migrations:
 
    ```bash
    npx sequelize-cli db:migrate
    ```
 
-4. Run the seeders:
+5. Run the seeders:
 
    ```bash
    npx sequelize-cli db:seed:all
    ```
 
-5. Run the application:
+6. Run the application:
 
    ```bash
    npm run dev
