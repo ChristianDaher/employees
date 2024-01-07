@@ -1,8 +1,7 @@
 import { Sequelize } from "sequelize-typescript";
 import path from "path";
-import dotenv from "dotenv";
 
-dotenv.config();
+require("dotenv").config();
 
 module.exports = new Sequelize({
   dialect: "mysql",
