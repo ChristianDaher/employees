@@ -1,5 +1,6 @@
 import express from "express";
 import db from "./database/sequelize";
+import departmentsRoutes from "./routes/Department.route";
 import userRoutes from "./routes/User.route";
 
 require("dotenv").config();
@@ -7,6 +8,7 @@ require("dotenv").config();
 const app = express();
 const port = Number(process.env.PORT) || 8080;
 
+app.use("/departments", departmentsRoutes);
 app.use("/users", userRoutes);
 
 db.authenticate()
