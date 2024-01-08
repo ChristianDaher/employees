@@ -18,7 +18,13 @@ To run the frontend application, follow these steps:
    npm install
    ```
 
-3. Run the application:
+3. Configure a `.env.local` file:
+
+   ```bash
+   copy .env.example .env.local
+   ```
+
+4. Run the application:
 
    ```bash
    npm run dev
