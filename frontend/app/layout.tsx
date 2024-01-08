@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import "primereact/resources/themes/saga-blue/theme.css";
+import "primereact/resources/primereact.min.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
