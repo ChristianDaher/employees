@@ -13,7 +13,7 @@ module.exports = {
       contact_id: {
         type: Sequelize.BIGINT.UNSIGNED,
         references: {
-          model: "contacts", // name of the related model
+          model: "contacts",
           key: "id",
         },
         onUpdate: "CASCADE",
@@ -22,7 +22,7 @@ module.exports = {
       customer_id: {
         type: Sequelize.BIGINT.UNSIGNED,
         references: {
-          model: "customers", // name of the related model
+          model: "customers",
           key: "id",
         },
         onUpdate: "CASCADE",

@@ -35,7 +35,7 @@ module.exports = {
       department_id: {
         type: Sequelize.BIGINT.UNSIGNED,
         references: {
-          model: "departments", // name of the related model
+          model: "departments",
           key: "id",
         },
         onUpdate: "CASCADE",
