@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import "primereact/resources/themes/saga-blue/theme.css";
 import "primereact/resources/primereact.min.css";
+import "primeicons/primeicons.css";
 import "./globals.css";
+import NavbarProvider from "@/components/contexts/navbar.context";
 
 export const metadata: Metadata = {
   title: "Employees",
@@ -27,7 +29,9 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="font-primary">{children}</body>
+      <body className="font-primary text-primary bg-background">
+        <NavbarProvider>{children}</NavbarProvider>
+      </body>
     </html>
   );
 }

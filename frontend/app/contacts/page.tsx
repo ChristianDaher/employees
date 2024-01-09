@@ -3,7 +3,7 @@
 import AuthLayout from "@/components/layouts/auth.layout";
 import Loading from "@/components/loading";
 import { useEffect, useState } from "react";
-import { Contact, Customer } from "@/utils/interfaces";
+import { Contact, Customer } from "@/utils/interfaces/models";
 
 export default function Contacts() {
   const [contacts, setContacts] = useState<Contact[] | null>(null);

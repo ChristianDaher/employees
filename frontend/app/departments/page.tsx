@@ -3,7 +3,7 @@
 import AuthLayout from "@/components/layouts/auth.layout";
 import Loading from "@/components/loading";
 import { useEffect, useState } from "react";
-import { Department } from "@/utils/interfaces";
+import { Department } from "@/utils/interfaces/models";
 
 export default function Departments() {
   const [departments, setDepartments] = useState<Department[] | null>(null);

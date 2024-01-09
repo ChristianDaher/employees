@@ -3,7 +3,7 @@
 import AuthLayout from "@/components/layouts/auth.layout";
 import Loading from "@/components/loading";
 import { useEffect, useState } from "react";
-import { User } from "@/utils/interfaces";
+import { User } from "@/utils/interfaces/models";
 
 export default function Users() {
   const [users, setUsers] = useState<User[] | null>(null);

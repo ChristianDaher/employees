@@ -9,24 +9,44 @@
   @tailwind utilities;
 }
 
-/* @layer base { // For later darkmode lightmode stuff
+@layer base {
   @media (prefers-color-scheme: light) {
-      :root {
-          --color-test: 255 255 255;
-      }
+    :root {
+      --color-default: 255 255 255;
+      --color-primary: 17 24 39;
+      --color-secondary: 107 114 128;
+      --color-accent: 99 102 241;
+      --color-hover: 238 238 248;
+      --color-background: 249 250 251;
+    }
   }
 
   :root[data-theme="light"] {
-      --color-test: 255 255 255;
+    --color-default: 255 255 255;
+    --color-primary: 17 24 39;
+    --color-secondary: 107 114 128;
+    --color-accent: 99 102 241;
+    --color-hover: 238 238 248;
+    --color-background: 249 250 251;
   }
 
   @media (prefers-color-scheme: dark) {
-      :root {
-          --color-test: 41 52 65;
-      }
+    :root {
+      --color-default: 255 255 255;
+      --color-primary: 17 24 39;
+      --color-secondary: 107 114 128;
+      --color-accent: 99 102 241;
+      --color-hover: 238 238 248;
+      --color-background: 249 250 251;
+    }
   }
 
   :root[data-theme="dark"] {
-      --color-test: 41 52 65;
+    --color-default: 255 255 255;
+    --color-primary: 17 24 39;
+    --color-secondary: 107 114 128;
+    --color-accent: 99 102 241;
+    --color-hover: 238 238 248;
+    --color-background: 249 250 251;
   }
-} */
+}

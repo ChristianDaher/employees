@@ -13,11 +13,15 @@ const config: Config = {
         secondary: ["Open Sans", ...defaultTheme.fontFamily.sans],
       },
       colors: {
-        // test: "rgb(var(--color-test) / <alpha-value>)", // For later darkmode lightmode stuff
+        primary: "rgb(var(--color-primary)/<alpha-value>)",
+        secondary: "rgb(var(--color-secondary)/<alpha-value>)",
+        accent: "rgb(var(--color-accent)/<alpha-value>)",
+        hover: "rgb(var(--color-hover)/<alpha-value>)",
+        background: "rgb(var(--color-background)/<alpha-value>)",
       },
     },
   },
-  // darkMode: ["class", '[data-theme="dark"]'], // For later darkmode lightmode stuff
+  darkMode: ["class", '[data-theme="dark"]'],
   plugins: [],
 };
 
