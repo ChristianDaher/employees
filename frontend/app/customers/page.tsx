@@ -3,7 +3,7 @@
 import AuthLayout from "@/components/layouts/auth.layout";
 import Loading from "@/components/loading";
 import { useEffect, useState } from "react";
-import { Customer } from "@/utils/interfaces";
+import { Customer } from "@/utils/interfaces/models";
 
 export default function Customers() {
   const [customers, setCustomers] = useState<Customer[] | null>(null);

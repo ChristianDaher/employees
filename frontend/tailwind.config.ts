@@ -13,6 +13,7 @@ const config: Config = {
         secondary: ["Open Sans", ...defaultTheme.fontFamily.sans],
       },
       colors: {
+        default: "rgb(var(--color-default)/<alpha-value>)",
         primary: "rgb(var(--color-primary)/<alpha-value>)",
         secondary: "rgb(var(--color-secondary)/<alpha-value>)",
         accent: "rgb(var(--color-accent)/<alpha-value>)",
