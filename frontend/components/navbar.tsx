@@ -22,13 +22,14 @@ export default function Navbar() {
   return (
     <>
       <div
-        className={`fixed top-0 left-0 z-95 inset-0 bg-black/50 ${
+        className={`fixed top-0 left-0 z-[1000] inset-0 bg-black/50 ${
           isOpen ? "w-screen h-screen" : "hidden"
         }`}
-        onClick={() => setIsOpen(false)}
+        onClick={() => setIsOpen
+        (false)}
       />
       <nav
-        className={`fixed z-99 top-0 left-0 h-screen overflow-y-auto bg-default rounded-md shadow-md w-64 py-2 px-6 transform transition-transform duration-200 ${
+        className={`fixed z-[1001] top-0 left-0 h-screen overflow-y-auto bg-default rounded-md shadow-md w-64 py-2 px-6 transform transition-transform duration-200 ${
           isOpen ? "translate-x-0" : "-translate-x-[110%]"
         }`}
       >
