@@ -12,7 +12,7 @@ interface NavbarState {
 const defaultNavbarState: NavbarState = {
   isOpen: false,
   setIsOpen: () => {},
-  title: "Welcome",
+  title: "",
   setTitle: () => {},
 };
 
@@ -24,7 +24,7 @@ export default function NavbarProvider({
   children: React.ReactNode;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [title, setTitle] = useState("Welcome");
+  const [title, setTitle] = useState("");
 
   return (
     <NavbarContext.Provider value={{ isOpen, setIsOpen, title, setTitle }}>

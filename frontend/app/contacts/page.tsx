@@ -2,11 +2,15 @@
 
 import AuthLayout from "@/components/layouts/auth.layout";
 import Loading from "@/components/loading";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { Contact, Customer } from "@/utils/interfaces/models";
+import { NavbarContext } from "@/components/contexts/navbar.context";
 
 export default function Contacts() {
   const [contacts, setContacts] = useState<Contact[] | null>(null);
+  const { setTitle } = useContext(NavbarContext);
+
+  setTitle("Contacts");
 
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/contacts`)

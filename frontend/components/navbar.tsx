@@ -45,7 +45,6 @@ export default function Navbar() {
                         href={child.href}
                         title={child.title}
                         icon={child.icon}
-                        onClick={() => setTitle(child.title)}
                       />
                     </li>
                   )

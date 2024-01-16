@@ -2,11 +2,15 @@
 
 import AuthLayout from "@/components/layouts/auth.layout";
 import Loading from "@/components/loading";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { Customer } from "@/utils/interfaces/models";
+import { NavbarContext } from "@/components/contexts/navbar.context";
 
 export default function Customers() {
   const [customers, setCustomers] = useState<Customer[] | null>(null);
+  const { setTitle } = useContext(NavbarContext);
+
+  setTitle("Customers");
 
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/customers`)

@@ -3,17 +3,16 @@
 import AuthLayout from "@/components/layouts/auth.layout";
 import Loading from "@/components/loading";
 import { classNames } from "primereact/utils";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useContext } from "react";
 import { Department } from "@/utils/interfaces/models";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
-import { Toolbar } from "primereact/toolbar";
 import { Button } from "primereact/button";
 import { Toast } from "primereact/toast";
 import { Dialog } from "primereact/dialog";
-import Clear from "@/components/custom-datatable/clear";
 import GlobalSearch from "@/components/custom-datatable/global-search";
 import { InputText } from "primereact/inputtext";
+import { NavbarContext } from "@/components/contexts/navbar.context";
 
 const emptyDepartment: Department = {
   name: "",
@@ -30,6 +29,9 @@ export default function Departments() {
   const [globalSearchValue, setGlobalSearchValue] = useState<string>("");
   const toast = useRef<Toast>(null);
   const dt = useRef<DataTable<Department[]>>(null);
+  const { setTitle } = useContext(NavbarContext);
+
+  setTitle("Departments");
 
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/departments`)
@@ -40,14 +42,23 @@ export default function Departments() {
       });
   }, []);
 
-  function clear() {
-    setGlobalSearchValue("");
-  }
-
   const header = () => {
     return (
-      <div className="flex justify-between">
-        <Clear onClick={clear} />
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-4">
+          <Button
+            label="New"
+            icon="pi pi-plus"
+            severity="success"
+            onClick={openNew}
+          />
+          <Button
+            label="Export"
+            icon="pi pi-upload"
+            className="p-button-help"
+            onClick={exportCSV}
+          />
+        </div>
         <GlobalSearch
           value={globalSearchValue}
           onClick={(event) => setGlobalSearchValue(event.target.value)}
@@ -84,28 +95,6 @@ export default function Departments() {
   function exportCSV() {
     dt.current?.exportCSV();
   }
-
-  const startToolbarTemplate = () => {
-    return (
-      <Button
-        label="New"
-        icon="pi pi-plus"
-        severity="success"
-        onClick={openNew}
-      />
-    );
-  };
-
-  const endToolbarTemplate = () => {
-    return (
-      <Button
-        label="Export"
-        icon="pi pi-upload"
-        className="p-button-help"
-        onClick={exportCSV}
-      />
-    );
-  };
 
   const actionBodyTemplate = (rowData: Department) => {
     return (
@@ -194,11 +183,6 @@ export default function Departments() {
       ) : (
         <>
           <Toast ref={toast} />
-          <Toolbar
-            className="mb-4"
-            start={startToolbarTemplate}
-            end={endToolbarTemplate}
-          />
           <DataTable
             ref={dt}
             value={departments}
