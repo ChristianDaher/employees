@@ -2,7 +2,7 @@
 
 import AuthLayout from "@/components/layouts/auth.layout";
 import Loading from "@/components/loading";
-import { classNames } from 'primereact/utils';
+import { classNames } from "primereact/utils";
 import { useEffect, useRef, useState } from "react";
 import { Department } from "@/utils/interfaces/models";
 import { DataTable } from "primereact/datatable";
@@ -56,34 +56,34 @@ export default function Departments() {
     );
   };
 
-  const openNew = () => {
+  function openNew() {
     setDepartment(emptyDepartment);
     setSubmitted(false);
     setDepartmentDialog(true);
-  };
+  }
 
-  const hideDialog = () => {
+  function hideDialog() {
     setSubmitted(false);
     setDepartmentDialog(false);
-  };
+  }
 
-  const hideDeleteDepartmentDialog = () => {
+  function hideDeleteDepartmentDialog() {
     setDeleteDepartmentDialog(false);
-  };
+  }
 
-  const editDepartment = (department: Department) => {
+  function editDepartment(department: Department) {
     setDepartment({ ...department });
     setDepartmentDialog(true);
-  };
+  }
 
-  const confirmDeleteDepartment = (department: Department) => {
+  function confirmDeleteDepartment(department: Department) {
     setDepartment(department);
     setDeleteDepartmentDialog(true);
-  };
+  }
 
-  const exportCSV = () => {
+  function exportCSV() {
     dt.current?.exportCSV();
-  };
+  }
 
   const startToolbarTemplate = () => {
     return (
@@ -154,7 +154,7 @@ export default function Departments() {
     });
   }
 
-  const saveDepartment = () => {
+  function saveDepartment() {
     setSubmitted(true);
 
     if (department.name.trim()) {
@@ -162,21 +162,21 @@ export default function Departments() {
         toast.current.show({
           severity: "success",
           summary: "Successful",
-          detail: "Product Updated",
+          detail: "Department Updated",
           life: 3000,
         });
       } else {
         toast.current.show({
           severity: "success",
           summary: "Successful",
-          detail: "Product Created",
+          detail: "Department Created",
           life: 3000,
         });
       }
 
       setDepartmentDialog(false);
     }
-  };
+  }
 
   const departmentDialogFooter = (
     <>
@@ -238,7 +238,9 @@ export default function Departments() {
               <InputText
                 id="name"
                 value={department.name}
-                onChange={(event)=>setDepartment({...department, name: event.target.value})}
+                onChange={(event) =>
+                  setDepartment({ ...department, name: event.target.value })
+                }
                 required
                 autoFocus
                 className={classNames({
