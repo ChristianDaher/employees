@@ -4,10 +4,6 @@ export interface CustomLinkProps {
   icon: string;
 }
 
-export interface ClearProps {
-  onClick: () => void;
-}
-
 export interface CustomDatatableHeaderProps {
   globalSearchValue: string;
   onClickNew: React.MouseEventHandler<HTMLButtonElement>;
@@ -15,6 +11,12 @@ export interface CustomDatatableHeaderProps {
   onSearch: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-export interface NewButtonProps {
-  openNew: () => void;
+export interface CustomDatatableDeleteDialogProps {
+  visible: boolean;
+  onHide: () => void;
+  onCancelDelete: () => void;
+  onConfirmDelete: () => void;
+  entity: Object;
+  entityName: string;
+  entityDisplay: string;
 }

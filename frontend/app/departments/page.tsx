@@ -13,6 +13,7 @@ import { Dialog } from "primereact/dialog";
 import CustomDatatableHeader from "@/components/custom-datatable/header";
 import { InputText } from "primereact/inputtext";
 import { NavbarContext } from "@/components/contexts/navbar.context";
+import DeleteDialog from "@/components/custom-datatable/dialog-delete";
 
 const emptyDepartment: Department = {
   name: "",
@@ -105,23 +106,6 @@ export default function Departments() {
       </div>
     );
   };
-
-  const deleteDepartmentDialogFooter = (
-    <>
-      <Button
-        label="No"
-        icon="pi pi-times"
-        outlined
-        onClick={hideDeleteDepartmentDialog}
-      />
-      <Button
-        label="Yes"
-        icon="pi pi-check"
-        severity="danger"
-        onClick={deleteDepartment}
-      />
-    </>
-  );
 
   function deleteDepartment() {
     setDeleteDepartmentDialog(false);
@@ -227,28 +211,15 @@ export default function Departments() {
             </div>
           </Dialog>
 
-          <Dialog
+          <DeleteDialog
             visible={deleteDepartmentDialog}
-            style={{ width: "32rem" }}
-            breakpoints={{ "960px": "75vw", "641px": "90vw" }}
-            header="Confirm"
-            modal
-            footer={deleteDepartmentDialogFooter}
             onHide={hideDeleteDepartmentDialog}
-          >
-            <div className="confirmation-content flex items-center gap-4">
-              <i
-                className="pi pi-exclamation-triangle"
-                style={{ fontSize: "2rem" }}
-              />
-              {department && (
-                <span>
-                  Are you sure you want to delete the <b>{department.name}</b>{" "}
-                  department?
-                </span>
-              )}
-            </div>
-          </Dialog>
+            onCancelDelete={hideDeleteDepartmentDialog}
+            onConfirmDelete={deleteDepartment}
+            entity={department}
+            entityName="department"
+            entityDisplay={department.name}
+          />
         </>
       )}
     </AuthLayout>
