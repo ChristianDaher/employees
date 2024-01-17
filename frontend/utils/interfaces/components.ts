@@ -8,9 +8,11 @@ export interface ClearProps {
   onClick: () => void;
 }
 
-export interface GlobalSearchProps {
-  value: string;
-  onClick: (e: React.ChangeEvent<HTMLInputElement>) => void;
+export interface CustomDatatableHeaderProps {
+  globalSearchValue: string;
+  onClickNew: React.MouseEventHandler<HTMLButtonElement>;
+  onClickExport: React.MouseEventHandler<HTMLButtonElement>;
+  onSearch: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export interface NewButtonProps {

@@ -10,7 +10,7 @@ import { Column } from "primereact/column";
 import { Button } from "primereact/button";
 import { Toast } from "primereact/toast";
 import { Dialog } from "primereact/dialog";
-import GlobalSearch from "@/components/custom-datatable/global-search";
+import CustomDatatableHeader from "@/components/custom-datatable/header";
 import { InputText } from "primereact/inputtext";
 import { NavbarContext } from "@/components/contexts/navbar.context";
 
@@ -44,28 +44,18 @@ export default function Departments() {
 
   const header = () => {
     return (
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-4">
-          <Button
-            label="New"
-            icon="pi pi-plus"
-            severity="success"
-            onClick={openNew}
-          />
-          <Button
-            label="Export"
-            icon="pi pi-upload"
-            className="p-button-help"
-            onClick={exportCSV}
-          />
-        </div>
-        <GlobalSearch
-          value={globalSearchValue}
-          onClick={(event) => setGlobalSearchValue(event.target.value)}
-        />
-      </div>
+      <CustomDatatableHeader
+        onClickNew={openNew}
+        onClickExport={exportCSV}
+        globalSearchValue={globalSearchValue}
+        onSearch={search}
+      />
     );
   };
+
+  function search(event: React.ChangeEvent<HTMLInputElement>) {
+    setGlobalSearchValue(event.target.value);
+  }
 
   function openNew() {
     setDepartment(emptyDepartment);
