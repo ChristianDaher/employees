@@ -10,9 +10,9 @@ export default function Customers() {
   const [customers, setCustomers] = useState<Customer[] | null>(null);
   const { setTitle } = useContext(NavbarContext);
 
-  setTitle("Customers");
-
+  
   useEffect(() => {
+    setTitle("Customers");
     fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/customers`)
       .then((response) => response.json())
       .then((data: Customer[]) => setCustomers(data));

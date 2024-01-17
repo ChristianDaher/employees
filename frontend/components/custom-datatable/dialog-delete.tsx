@@ -20,7 +20,7 @@ const DeleteDialog = ({
           outlined
           onClick={onCancelDelete}
         />
-        <Button label="Save" icon="pi pi-check" onClick={onConfirmDelete} />
+        <Button severity="danger" label="Confirm" icon="pi pi-check" onClick={onConfirmDelete} />
       </>
     );
   };
@@ -30,7 +30,7 @@ const DeleteDialog = ({
       visible={visible}
       style={{ width: "32rem" }}
       breakpoints={{ "960px": "75vw", "641px": "90vw" }}
-      header="Confirm"
+      header="Delete Confirmation"
       modal
       footer={footer}
       onHide={onHide}

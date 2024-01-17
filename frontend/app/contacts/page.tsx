@@ -10,9 +10,8 @@ export default function Contacts() {
   const [contacts, setContacts] = useState<Contact[] | null>(null);
   const { setTitle } = useContext(NavbarContext);
 
-  setTitle("Contacts");
-
   useEffect(() => {
+    setTitle("Contacts");
     fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/contacts`)
       .then((response) => response.json())
       .then((data: Contact[]) => setContacts(data));

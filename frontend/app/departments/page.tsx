@@ -14,6 +14,7 @@ import CustomDatatableHeader from "@/components/custom-datatable/header";
 import { InputText } from "primereact/inputtext";
 import { NavbarContext } from "@/components/contexts/navbar.context";
 import DeleteDialog from "@/components/custom-datatable/dialog-delete";
+import DepartmentService from "@/services/Department.service";
 
 const emptyDepartment: Department = {
   name: "",
@@ -32,16 +33,17 @@ export default function Departments() {
   const dt = useRef<DataTable<Department[]>>(null);
   const { setTitle } = useContext(NavbarContext);
 
-  setTitle("Departments");
-
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/departments`)
-      .then((response) => response.json())
-      .then((data: Department[]) => {
-        setDepartments(data);
-        setIsLoading(false);
-      });
+    setTitle("Departments");
+
+    fetchDepartments();
   }, []);
+
+  async function fetchDepartments() {
+    const departments = await DepartmentService.getAll();
+    setDepartments(departments);
+    setIsLoading(false);
+  }
 
   const header = () => {
     return (
@@ -107,21 +109,34 @@ export default function Departments() {
     );
   };
 
-  function deleteDepartment() {
-    setDeleteDepartmentDialog(false);
-    toast.current.show({
-      severity: "success",
-      summary: "Successful",
-      detail: "Department Deleted",
-      life: 3000,
-    });
+  async function deleteDepartment() {
+    try {
+      const isDelete = await DepartmentService.delete(department.id);
+      if (!isDelete) throw new Error();
+      setDeleteDepartmentDialog(false);
+      toast.current.show({
+        severity: "success",
+        summary: "Successful",
+        detail: "Department Deleted",
+        life: 3000,
+      });
+      fetchDepartments();
+    } catch (error) {
+      toast.current.show({
+        severity: "error",
+        summary: "Error",
+        detail: "Department NOT Deleted",
+        life: 3000,
+      });
+    }
   }
 
-  function saveDepartment() {
+  async function saveDepartment() {
     setSubmitted(true);
 
     if (department.name.trim()) {
       if (department.id) {
+        await DepartmentService.update(department);
         toast.current.show({
           severity: "success",
           summary: "Successful",
@@ -129,6 +144,7 @@ export default function Departments() {
           life: 3000,
         });
       } else {
+        await DepartmentService.create(department);
         toast.current.show({
           severity: "success",
           summary: "Successful",
@@ -136,6 +152,8 @@ export default function Departments() {
           life: 3000,
         });
       }
+
+      fetchDepartments();
 
       setDepartmentDialog(false);
     }

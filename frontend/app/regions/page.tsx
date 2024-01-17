@@ -10,9 +10,9 @@ export default function Departments() {
   const [regions, setRegions] = useState<Region[] | null>(null);
   const { setTitle } = useContext(NavbarContext);
 
-  setTitle("Regions");
-
+  
   useEffect(() => {
+    setTitle("Regions");
     fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/regions`)
       .then((response) => response.json())
       .then((data: Region[]) => setRegions(data));

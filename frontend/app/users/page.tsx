@@ -10,9 +10,9 @@ export default function Users() {
   const [users, setUsers] = useState<User[] | null>(null);
   const { setTitle } = useContext(NavbarContext);
 
-  setTitle("Users");
-
   useEffect(() => {
+    setTitle("Users");
+
     fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users`)
       .then((response) => response.json())
       .then((data: User[]) => setUsers(data));
