@@ -19,6 +19,12 @@ class DepartmentService implements Service<Department> {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(department),
     });
+
+    if (!result.ok) {
+      const errorData = await result.json();
+      throw new Error(errorData.error);
+    }
+
     return await result.json();
   }
 
@@ -28,6 +34,12 @@ class DepartmentService implements Service<Department> {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(department),
     });
+
+    if (!result.ok) {
+      const errorData = await result.json();
+      throw new Error(errorData.error);
+    }
+
     return await result.json();
   }
 

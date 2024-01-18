@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import Department from "../database/models/Department.model";
+import { ValidationError } from "sequelize";
 
 export default class DepartmentController {
   static async getAllDepartments(req: Request, res: Response) {
@@ -16,18 +17,45 @@ export default class DepartmentController {
     }
   }
 
-  static async createDepartment(req: Request, res: Response) {
-    const newDepartment = await Department.create(req.body);
-    res.json(newDepartment);
+  static async createDepartment(
+    req: Request,
+    res: Response
+  ): Promise<Response> {
+    try {
+      const newDepartment = await Department.create(req.body);
+      return res.json(newDepartment);
+    } catch (error) {
+      if (
+        error instanceof ValidationError &&
+        error.name === "SequelizeUniqueConstraintError"
+      ) {
+        return res
+          .status(400)
+          .json({ error: "Department name must be unique." });
+      }
+      return res.status(500).json({ error: "An unexpected error occurred." });
+    }
   }
 
   static async updateDepartment(req: Request<{ id: string }>, res: Response) {
-    const department = await Department.findByPk(req.params.id);
-    if (department) {
-      const updatedDepartment = await department.update(req.body);
-      res.json(updatedDepartment);
-    } else {
-      res.status(404).send("Department not found");
+    try {
+      const department = await Department.findByPk(req.params.id);
+      if (department) {
+        const updatedDepartment = await department.update(req.body);
+        res.json(updatedDepartment);
+      } else {
+        res.status(404).send("Department not found");
+      }
+    } catch (error) {
+      if (
+        error instanceof ValidationError &&
+        error.name === "SequelizeUniqueConstraintError"
+      ) {
+        return res
+          .status(400)
+          .json({ error: "Department name must be unique." });
+      }
+      return res.status(500).json({ error: "An unexpected error occurred." });
     }
   }
 

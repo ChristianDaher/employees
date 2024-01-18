@@ -14,7 +14,7 @@ import CustomDatatableHeader from "@/components/custom-datatable/header";
 import { InputText } from "primereact/inputtext";
 import { NavbarContext } from "@/components/contexts/navbar.context";
 import DeleteDialog from "@/components/custom-datatable/dialog-delete";
-import DepartmentService from "@/services/Department.service";
+import DepartmentService from "@/services/department.service";
 
 const emptyDepartment: Department = {
   name: "",
@@ -35,7 +35,6 @@ export default function Departments() {
 
   useEffect(() => {
     setTitle("Departments");
-
     fetchDepartments();
   }, []);
 
@@ -133,29 +132,35 @@ export default function Departments() {
 
   async function saveDepartment() {
     setSubmitted(true);
-
     if (department.name.trim()) {
-      if (department.id) {
-        await DepartmentService.update(department);
+      try {
+        if (department.id) {
+          await DepartmentService.update(department);
+          toast.current.show({
+            severity: "success",
+            summary: "Successful",
+            detail: "Department Updated",
+            life: 3000,
+          });
+        } else {
+          await DepartmentService.create(department);
+          toast.current.show({
+            severity: "success",
+            summary: "Successful",
+            detail: "Department Created",
+            life: 3000,
+          });
+        }
+        fetchDepartments();
+        setDepartmentDialog(false);
+      } catch (error) {
         toast.current.show({
-          severity: "success",
-          summary: "Successful",
-          detail: "Department Updated",
-          life: 3000,
-        });
-      } else {
-        await DepartmentService.create(department);
-        toast.current.show({
-          severity: "success",
-          summary: "Successful",
-          detail: "Department Created",
+          severity: "error",
+          summary: "Error",
+          detail: error.message,
           life: 3000,
         });
       }
-
-      fetchDepartments();
-
-      setDepartmentDialog(false);
     }
   }
 
@@ -197,7 +202,6 @@ export default function Departments() {
               className="w-10"
             ></Column>
           </DataTable>
-
           <Dialog
             visible={departmentDialog}
             style={{ width: "32rem" }}
@@ -228,7 +232,6 @@ export default function Departments() {
               )}
             </div>
           </Dialog>
-
           <DeleteDialog
             visible={deleteDepartmentDialog}
             onHide={hideDeleteDepartmentDialog}

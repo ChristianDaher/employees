@@ -54,7 +54,7 @@ export interface Service<T> {
   API_URL: string;
   getAll(): Promise<T[]>;
   get(id: bigint): Promise<T>;
-  create(item: T): Promise<void>;
-  update(item: T): Promise<void>;
-  delete(id: bigint): Promise<void>;
+  create(item: T): Promise<T | Error>;
+  update(item: T): Promise<T | Error>;
+  delete(id: bigint): Promise<Boolean>;
 }
