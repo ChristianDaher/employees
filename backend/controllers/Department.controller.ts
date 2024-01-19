@@ -1,10 +1,45 @@
 import { Request, Response } from "express";
 import Department from "../database/models/Department.model";
-import { ValidationError } from "sequelize";
+import { ValidationError, Op } from "sequelize";
 
 export default class DepartmentController {
   static async getAllDepartments(req: Request, res: Response) {
-    const departments = await Department.findAll();
+    let pageNumber = Number(req.query.page) || 1;
+    const limit = 2;
+    const totalItems = await Department.count();
+    const totalPages = Math.ceil(totalItems / limit);
+    pageNumber = Math.max(1, Math.min(pageNumber, totalPages));
+    const offset = (pageNumber - 1) * limit;
+
+    const departments = await Department.findAll({
+      limit,
+      offset,
+    });
+
+    res.json({
+      totalItems,
+      departments,
+      totalPages,
+      currentPage: pageNumber,
+      perPage: limit,
+      first: offset + 1,
+      last: Math.min(offset + limit, totalItems),
+    });
+  }
+
+  static async searchDepartments(req: Request, res: Response) {
+    const query = req.query.q?.toString();
+    let departments;
+    if (!query) {
+      departments = await Department.findAll();
+    }
+    departments = await Department.findAll({
+      where: {
+        name: {
+          [Op.like]: `%${query}%`,
+        },
+      },
+    });
     res.json(departments);
   }
 
