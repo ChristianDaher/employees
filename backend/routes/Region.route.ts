@@ -4,6 +4,7 @@ import RegionController from "../controllers/Region.controller";
 const router = Router();
 
 router.get("/", RegionController.getAllRegions);
+router.get("/search", RegionController.searchRegions);
 router.get("/:id", RegionController.getRegionById);
 router.post("/", RegionController.createRegion);
 router.put("/:id", RegionController.updateRegion);
