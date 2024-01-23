@@ -55,8 +55,11 @@ export default function Departments() {
     );
   };
 
-  function search(event: React.ChangeEvent<HTMLInputElement>) {
-    setGlobalSearchValue(event.target.value);
+  async function search(event: React.ChangeEvent<HTMLInputElement>) {
+    const newValue = event.target.value;
+    setGlobalSearchValue(newValue);
+    const newDepartments = await DepartmentService.search(newValue);
+    setDepartments(newDepartments);
   }
 
   function openNew() {

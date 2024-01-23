@@ -3,8 +3,8 @@ import { Service, Department } from "@/utils/interfaces/models";
 class DepartmentService implements Service<Department> {
   API_URL = `${process.env.NEXT_PUBLIC_BACKEND_URL}/departments`;
 
-  async getAll(pageNumber: number) {
-    const result = await fetch(`${this.API_URL}?page=${pageNumber}`);
+  async getAll() {
+    const result = await fetch(this.API_URL);
     return await result.json();
   }
 

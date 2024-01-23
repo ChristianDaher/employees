@@ -9,7 +9,7 @@ export default function header({
   onSearch,
 }: CustomDatatableHeaderProps) {
   return (
-    <div className="flex justify-between items-center">
+    <div className="flex justify-between items-center flex-wrap gap-4">
       <div className="flex items-center gap-4">
         <Button
           label="New"
