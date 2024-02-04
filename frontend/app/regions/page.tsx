@@ -203,7 +203,7 @@ export default function Regions() {
               body={actionBodyTemplate}
               exportable={false}
               className="w-10"
-            ></Column>
+            />
           </DataTable>
           <Dialog
             visible={regionDialog}

@@ -4,27 +4,6 @@ import { ValidationError, Op } from "sequelize";
 
 export default class DepartmentController {
   static async getAllDepartments(req: Request, res: Response) {
-    // let pageNumber = Number(req.query.page) || 1;
-    // const limit = 2;
-    // const totalItems = await Department.count();
-    // const totalPages = Math.ceil(totalItems / limit);
-    // pageNumber = Math.max(1, Math.min(pageNumber, totalPages));
-    // const offset = (pageNumber - 1) * limit;
-
-    // const departments = await Department.findAll({
-    //   limit,
-    //   offset,
-    // });
-
-    // res.json({
-    //   totalItems,
-    //   departments,
-    //   totalPages,
-    //   currentPage: pageNumber,
-    //   perPage: limit,
-    //   first: offset + 1,
-    //   last: Math.min(offset + limit, totalItems),
-    // });
     const departments = await Department.findAll();
     res.json(departments)
   }

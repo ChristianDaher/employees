@@ -203,7 +203,7 @@ export default function Departments() {
               body={actionBodyTemplate}
               exportable={false}
               className="w-10"
-            ></Column>
+            />
           </DataTable>
           <Dialog
             visible={departmentDialog}
