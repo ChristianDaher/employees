@@ -31,6 +31,7 @@ export interface Customer {
   customerCode?: string;
   accountNumber?: number;
   region: Region;
+  contacts?: Contact[];
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -45,7 +46,7 @@ export interface Contact {
   title?: string;
   note?: string;
   department: Department;
-  customers: Customer[];
+  customers?: Customer[];
   createdAt?: Date;
   updatedAt?: Date;
 }
