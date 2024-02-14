@@ -5,7 +5,7 @@ import { ValidationError, Op } from "sequelize";
 export default class RegionController {
   static async getAllRegions(req: Request, res: Response) {
     const regions = await Region.findAll();
-    res.json(regions)
+    res.json(regions);
   }
 
   static async searchRegions(req: Request, res: Response) {
@@ -33,10 +33,7 @@ export default class RegionController {
     }
   }
 
-  static async createRegion(
-    req: Request,
-    res: Response
-  ): Promise<Response> {
+  static async createRegion(req: Request, res: Response): Promise<Response> {
     try {
       const newRegion = await Region.create(req.body);
       return res.json(newRegion);
@@ -45,9 +42,7 @@ export default class RegionController {
         error instanceof ValidationError &&
         error.name === "SequelizeUniqueConstraintError"
       ) {
-        return res
-          .status(400)
-          .json({ error: "Region name must be unique." });
+        return res.status(400).json({ error: "Region name must be unique." });
       }
       return res.status(500).json({ error: "An unexpected error occurred." });
     }
@@ -67,9 +62,7 @@ export default class RegionController {
         error instanceof ValidationError &&
         error.name === "SequelizeUniqueConstraintError"
       ) {
-        return res
-          .status(400)
-          .json({ error: "Region name must be unique." });
+        return res.status(400).json({ error: "Region name must be unique." });
       }
       return res.status(500).json({ error: "An unexpected error occurred." });
     }

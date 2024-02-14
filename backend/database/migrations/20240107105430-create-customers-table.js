@@ -25,7 +25,7 @@ module.exports = {
         unique: true,
       },
       account_number: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.STRING,
         unique: true,
       },
       region_id: {

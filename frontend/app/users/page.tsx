@@ -261,7 +261,7 @@ export default function Users() {
                 }
                 required
                 autoFocus
-                className={classNames("basis-1/2", {
+                className={classNames("w-1/2", {
                   "p-invalid": submitted && !user.firstName,
                 })}
               />
@@ -280,7 +280,7 @@ export default function Users() {
                   setUser({ ...user, lastName: event.target.value })
                 }
                 required
-                className={classNames("basis-1/2", {
+                className={classNames("w-1/2", {
                   "p-invalid": submitted && !user.lastName,
                 })}
               />
@@ -299,7 +299,7 @@ export default function Users() {
                   setUser({ ...user, email: event.target.value })
                 }
                 required
-                className={classNames("basis-1/2", {
+                className={classNames("w-1/2", {
                   "p-invalid": submitted && !user.email,
                 })}
               />
@@ -318,7 +318,7 @@ export default function Users() {
                   setUser({ ...user, phoneNumber: event.target.value })
                 }
                 required
-                className={classNames("basis-1/2", {
+                className={classNames("w-1/2", {
                   "p-invalid": submitted && !user.phoneNumber,
                 })}
               />
@@ -339,7 +339,7 @@ export default function Users() {
                 optionLabel="name"
                 placeholder="Select a Department"
                 filter
-                className="basis-1/2"
+                className="w-1/2"
               />
             </div>
           </Dialog>

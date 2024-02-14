@@ -21,7 +21,7 @@ interface CustomerAttributes {
   phoneNumber?: string;
   note?: string;
   customerCode?: string;
-  accountNumber?: number;
+  accountNumber?: string;
   regionId?: bigint;
 }
 
@@ -58,7 +58,7 @@ export default class Customer extends Model<
   customerCode!: string;
 
   @Unique
-  @Column({ field: "account_number", type: DataType.NUMBER })
+  @Column({ field: "account_number", type: DataType.STRING })
   accountNumber!: string;
 
   @ForeignKey(() => Region)

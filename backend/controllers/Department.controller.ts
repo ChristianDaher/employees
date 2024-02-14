@@ -5,7 +5,7 @@ import { ValidationError, Op } from "sequelize";
 export default class DepartmentController {
   static async getAllDepartments(req: Request, res: Response) {
     const departments = await Department.findAll();
-    res.json(departments)
+    res.json(departments);
   }
 
   static async searchDepartments(req: Request, res: Response) {

@@ -14,10 +14,10 @@ export interface Region {
 
 export interface User {
   id?: bigint;
-  firstName?: string;
-  lastName?: string;
-  phoneNumber?: string;
-  email?: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  email: string;
   department: Department;
   createdAt?: Date;
   updatedAt?: Date;
@@ -25,28 +25,28 @@ export interface User {
 
 export interface Customer {
   id?: bigint;
-  name?: string;
-  phoneNumber?: string;
+  name: string;
+  phoneNumber: string;
   note?: string;
-  customerCode?: string;
-  accountNumber?: number;
+  customerCode: string;
+  accountNumber: string;
   region: Region;
-  contacts?: Contact[];
+  contacts: Contact[];
   createdAt?: Date;
   updatedAt?: Date;
 }
 
 export interface Contact {
   id?: bigint;
-  firstName?: string;
-  lastName?: string;
-  KOL?: boolean;
-  phoneNumber?: string;
-  email?: string;
+  firstName: string;
+  lastName: string;
+  KOL: boolean;
+  phoneNumber: string;
+  email: string;
   title?: string;
   note?: string;
   department: Department;
-  customers?: Customer[];
+  customers: Customer[];
   createdAt?: Date;
   updatedAt?: Date;
 }

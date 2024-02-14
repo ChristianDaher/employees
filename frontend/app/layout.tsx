@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Head from "next/head";
-import 'primereact/resources/themes/lara-light-indigo/theme.css';
+import "./globals.css";
+import "primereact/resources/themes/lara-light-indigo/theme.css";
 import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
-import "./globals.css";
 import NavbarProvider from "@/components/contexts/navbar.context";
 import { PrimeReactProvider } from "primereact/api";
 

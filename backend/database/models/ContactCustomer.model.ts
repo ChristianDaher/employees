@@ -26,7 +26,10 @@ interface ContactCustomerCreationAttributes
   createdAt: "created_at",
   updatedAt: "updated_at",
 })
-export default class ContactCustomer extends Model {
+export default class ContactCustomer extends Model<
+  ContactCustomerAttributes,
+  ContactCustomerCreationAttributes
+> {
   @PrimaryKey
   @AutoIncrement
   @Column(DataType.BIGINT.UNSIGNED)

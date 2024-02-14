@@ -4,7 +4,7 @@ import AuthLayout from "@/components/layouts/auth.layout";
 import Loading from "@/components/loading";
 import { classNames } from "primereact/utils";
 import { useEffect, useRef, useState, useContext } from "react";
-import { Customer, Region } from "@/utils/interfaces/models";
+import { Contact, Customer, Region } from "@/utils/interfaces/models";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Button } from "primereact/button";
@@ -23,7 +23,7 @@ const emptyCustomer: Customer = {
   phoneNumber: "",
   note: "",
   customerCode: "",
-  accountNumber: 0,
+  accountNumber: "",
   region: {
     name: "",
   },
@@ -37,8 +37,9 @@ const emptyCustomer: Customer = {
       title: "",
       note: "",
       department: {
-        name:"",
+        name: "",
       },
+      customers: [],
     },
   ],
 };
@@ -65,7 +66,6 @@ export default function Customers() {
 
   async function fetchCustomers() {
     const customers = await CustomerService.getAll();
-    console.log(customers)
     setCustomers(customers);
     setIsLoading(false);
   }
@@ -104,16 +104,16 @@ export default function Customers() {
     setCustomerDialog(false);
   }
 
-  function hideDeleteUserDialog() {
+  function hideDeleteCustomerDialog() {
     setDeleteCustomerDialog(false);
   }
 
-  function editUser(customer: Customer) {
+  function editCustomer(customer: Customer) {
     setCustomer({ ...customer });
     setCustomerDialog(true);
   }
 
-  function confirmDeleteUser(customer: Customer) {
+  function confirmdeleteCustomer(customer: Customer) {
     setCustomer(customer);
     setDeleteCustomerDialog(true);
   }
@@ -129,20 +129,20 @@ export default function Customers() {
           icon="pi pi-pencil"
           rounded
           outlined
-          onClick={() => editUser(rowData)}
+          onClick={() => editCustomer(rowData)}
         />
         <Button
           icon="pi pi-trash"
           rounded
           outlined
           severity="danger"
-          onClick={() => confirmDeleteUser(rowData)}
+          onClick={() => confirmdeleteCustomer(rowData)}
         />
       </div>
     );
   };
 
-  async function deleteUser() {
+  async function deleteCustomer() {
     try {
       const isDelete = await CustomerService.delete(customer.id);
       if (!isDelete) throw new Error();
@@ -164,13 +164,13 @@ export default function Customers() {
     }
   }
 
-  async function saveUser() {
+  async function saveCustomer() {
     setSubmitted(true);
     if (
-      customer.firstName?.trim() &&
-      customer.lastName?.trim() &&
-      customer.email?.trim() &&
-      customer.phoneNumber?.trim()
+      customer.name?.trim() &&
+      customer.phoneNumber?.trim() &&
+      customer.customerCode?.trim() &&
+      customer.accountNumber
     ) {
       try {
         if (customer.id) {
@@ -203,10 +203,10 @@ export default function Customers() {
     }
   }
 
-  const userDialogFooter = (
+  const customerDialogFooter = (
     <>
       <Button label="Cancel" icon="pi pi-times" outlined onClick={hideDialog} />
-      <Button label="Save" icon="pi pi-check" onClick={saveUser} />
+      <Button label="Save" icon="pi pi-check" onClick={saveCustomer} />
     </>
   );
 
@@ -227,11 +227,13 @@ export default function Customers() {
             loading={isLoading}
             header={header}
             globalFilterFields={[
-              "firstName",
-              "lastName",
-              "email",
+              "name",
               "phoneNumber",
+              "note",
+              "customerCode",
+              "accountNumber",
               "region",
+              "contacts",
             ]}
             paginator
             paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
@@ -240,16 +242,33 @@ export default function Customers() {
             rowsPerPageOptions={[5, 10, 25, 50]}
             emptyMessage="No customers found."
           >
-            <Column field="firstName" header="First Name" sortable />
-            <Column field="lastName" header="Last Name" sortable />
-            <Column field="email" header="Email" sortable />
+            <Column field="name" header="Name" sortable />
             <Column field="phoneNumber" header="Phone Number" sortable />
+            <Column field="note" header="Note" sortable />
+            <Column field="customerCode" header="Customer Code" sortable />
+            <Column field="accountNumber" header="Account Number" sortable />
             <Column
               field="region"
               header="Region"
-              body={(rowData) => rowData.region?.name ?? "Unspecified"}
+              body={(rowData: Customer) =>
+                rowData.region?.name ?? "Unspecified"
+              }
               sortable
               sortField="region.name"
+            />
+            <Column
+              field="contacts"
+              header="Contacts"
+              body={(rowData: Customer) =>
+                rowData.contacts.length === 0
+                  ? "None"
+                  : rowData.contacts
+                      .map(
+                        (contact: Contact) =>
+                          `${contact.firstName} ${contact.lastName}`
+                      )
+                      .join(", ")
+              }
             />
             <Column
               body={actionBodyTemplate}
@@ -263,65 +282,27 @@ export default function Customers() {
             breakpoints={{ "960px": "75vw", "641px": "90vw" }}
             header="Customer Details"
             modal
-            footer={userDialogFooter}
+            footer={customerDialogFooter}
             onHide={hideDialog}
           >
             <div className="field py-2 flex items-center gap-4">
-              <label htmlFor="firstName" className="font-bold basis-1/3">
-                First Name
+              <label htmlFor="name" className="font-bold basis-1/3">
+                Name
               </label>
               <InputText
-                id="firstName"
-                value={customer.firstName}
+                id="name"
+                value={customer.name}
                 onChange={(event) =>
-                  setCustomer({ ...customer, firstName: event.target.value })
+                  setCustomer({ ...customer, name: event.target.value })
                 }
                 required
                 autoFocus
-                className={classNames("basis-1/2", {
-                  "p-invalid": submitted && !customer.firstName,
+                className={classNames("w-1/2", {
+                  "p-invalid": submitted && !customer.name,
                 })}
               />
-              {submitted && !customer.firstName && (
-                <small className="p-error">First name is required.</small>
-              )}
-            </div>
-            <div className="field py-2 flex items-center gap-4">
-              <label htmlFor="lastName" className="font-bold basis-1/3">
-                Last Name
-              </label>
-              <InputText
-                id="lastName"
-                value={customer.lastName}
-                onChange={(event) =>
-                  setCustomer({ ...customer, lastName: event.target.value })
-                }
-                required
-                className={classNames("basis-1/2", {
-                  "p-invalid": submitted && !customer.lastName,
-                })}
-              />
-              {submitted && !customer.lastName && (
-                <small className="p-error">Last name is required.</small>
-              )}
-            </div>
-            <div className="field py-2 flex items-center gap-4">
-              <label htmlFor="email" className="font-bold basis-1/3">
-                Email
-              </label>
-              <InputText
-                id="email"
-                value={customer.email}
-                onChange={(event) =>
-                  setCustomer({ ...customer, email: event.target.value })
-                }
-                required
-                className={classNames("basis-1/2", {
-                  "p-invalid": submitted && !customer.email,
-                })}
-              />
-              {submitted && !customer.email && (
-                <small className="p-error">Email is required.</small>
+              {submitted && !customer.name && (
+                <small className="p-error">Name is required.</small>
               )}
             </div>
             <div className="field py-2 flex items-center gap-4">
@@ -335,12 +316,72 @@ export default function Customers() {
                   setCustomer({ ...customer, phoneNumber: event.target.value })
                 }
                 required
-                className={classNames("basis-1/2", {
+                className={classNames("w-1/2", {
                   "p-invalid": submitted && !customer.phoneNumber,
                 })}
               />
               {submitted && !customer.phoneNumber && (
                 <small className="p-error">Phone number is required.</small>
+              )}
+            </div>
+            <div className="field py-2 flex items-center gap-4">
+              <label htmlFor="note" className="font-bold basis-1/3">
+                Note
+              </label>
+              <InputText
+                id="note"
+                value={customer.note}
+                onChange={(event) =>
+                  setCustomer({ ...customer, note: event.target.value })
+                }
+                required
+                className={classNames("w-1/2", {
+                  "p-invalid": submitted && !customer.note,
+                })}
+              />
+              {submitted && !customer.note && (
+                <small className="p-error">Note is required.</small>
+              )}
+            </div>
+            <div className="field py-2 flex items-center gap-4">
+              <label htmlFor="customerCode" className="font-bold basis-1/3">
+                Customer code
+              </label>
+              <InputText
+                id="customerCode"
+                value={customer.customerCode}
+                onChange={(event) =>
+                  setCustomer({ ...customer, customerCode: event.target.value })
+                }
+                required
+                className={classNames("w-1/2", {
+                  "p-invalid": submitted && !customer.customerCode,
+                })}
+              />
+              {submitted && !customer.customerCode && (
+                <small className="p-error">Customer code is required.</small>
+              )}
+            </div>
+            <div className="field py-2 flex items-center gap-4">
+              <label htmlFor="accountNumber" className="font-bold basis-1/3">
+                Account number
+              </label>
+              <InputText
+                id="accountNumber"
+                value={customer.accountNumber}
+                onChange={(event) =>
+                  setCustomer({
+                    ...customer,
+                    accountNumber: event.target.value,
+                  })
+                }
+                required
+                className={classNames("w-1/2", {
+                  "p-invalid": submitted && !customer.accountNumber,
+                })}
+              />
+              {submitted && !customer.customerCode && (
+                <small className="p-error">Account number is required.</small>
               )}
             </div>
             <div className="field py-2 flex items-center gap-4">
@@ -356,18 +397,18 @@ export default function Customers() {
                 optionLabel="name"
                 placeholder="Select a Region"
                 filter
-                className="basis-1/2"
+                className="w-1/2"
               />
             </div>
           </Dialog>
           <DeleteDialog
             visible={deleteCustomerDialog}
-            onHide={hideDeleteUserDialog}
-            onCancelDelete={hideDeleteUserDialog}
-            onConfirmDelete={deleteUser}
+            onHide={hideDeleteCustomerDialog}
+            onCancelDelete={hideDeleteCustomerDialog}
+            onConfirmDelete={deleteCustomer}
             entity={customer}
             entityName="customer"
-            entityDisplay={customer.firstName + " " + customer.lastName}
+            entityDisplay={customer.name}
           />
         </>
       )}
