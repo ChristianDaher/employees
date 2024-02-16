@@ -16,7 +16,26 @@ import { NavbarContext } from "@/components/contexts/navbar.context";
 import DeleteDialog from "@/components/custom-datatable/dialog-delete";
 import CustomerService from "@/services/customer.service";
 import RegionService from "@/services/region.service";
+import ContactService from "@/services/contact.service";
 import { Dropdown } from "primereact/dropdown";
+import { InputTextarea } from "primereact/inputtextarea";
+import { RadioButton } from "primereact/radiobutton";
+import { MultiSelect } from "primereact/multiselect";
+
+const emptyContact: Contact = {
+  firstName: "",
+  lastName: "",
+  fullName: "",
+  KOL: false,
+  phoneNumber: "",
+  email: "",
+  title: "",
+  note: "",
+  department: {
+    name: "",
+  },
+  customers: [],
+};
 
 const emptyCustomer: Customer = {
   name: "",
@@ -27,25 +46,12 @@ const emptyCustomer: Customer = {
   region: {
     name: "",
   },
-  contacts: [
-    {
-      firstName: "",
-      lastName: "",
-      KOL: false,
-      phoneNumber: "",
-      email: "",
-      title: "",
-      note: "",
-      department: {
-        name: "",
-      },
-      customers: [],
-    },
-  ],
+  contacts: [emptyContact],
 };
 
 export default function Customers() {
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [customer, setCustomer] = useState<Customer>(emptyCustomer);
   const [regions, setRegions] = useState<Region[]>([]);
   const [customerDialog, setCustomerDialog] = useState<boolean>(false);
@@ -57,11 +63,14 @@ export default function Customers() {
   const toast = useRef<Toast>(null);
   const dt = useRef<DataTable<Customer[]>>(null);
   const { setTitle } = useContext(NavbarContext);
+  const [step, setStep] = useState(0);
+  const [contactOption, setContactOption] = useState("existing");
 
   useEffect(() => {
     setTitle("Customers");
     fetchCustomers();
     fetchRegions();
+    fetchContacts();
   }, []);
 
   async function fetchCustomers() {
@@ -73,6 +82,11 @@ export default function Customers() {
   async function fetchRegions() {
     const regions = await RegionService.getAll();
     setRegions(regions);
+  }
+
+  async function fetchContacts() {
+    const contacts = await ContactService.getAll();
+    setContacts(contacts);
   }
 
   const header = () => {
@@ -102,6 +116,9 @@ export default function Customers() {
   function hideDialog() {
     setSubmitted(false);
     setCustomerDialog(false);
+    setTimeout(() => {
+      setStep(0);
+    }, 400);
   }
 
   function hideDeleteCustomerDialog() {
@@ -203,10 +220,42 @@ export default function Customers() {
     }
   }
 
+  function next() {
+    setSubmitted(true);
+    if (
+      customer.name?.trim() &&
+      customer.phoneNumber?.trim() &&
+      customer.customerCode?.trim() &&
+      customer.accountNumber
+    ) {
+      setSubmitted(false);
+      setStep(step + 1);
+    }
+  }
+
   const customerDialogFooter = (
     <>
-      <Button label="Cancel" icon="pi pi-times" outlined onClick={hideDialog} />
-      <Button label="Save" icon="pi pi-check" onClick={saveCustomer} />
+      {step === 0 ? (
+        <>
+          <Button
+            label="Cancel"
+            icon="pi pi-times"
+            outlined
+            onClick={hideDialog}
+          />
+          <Button label="Next" icon="pi pi-arrow-right" onClick={next} />
+        </>
+      ) : (
+        <>
+          <Button
+            label="Back"
+            icon="pi pi-arrow-left"
+            outlined
+            onClick={() => setStep(step - 1)}
+          />
+          <Button label="Save" icon="pi pi-check" onClick={saveCustomer} />
+        </>
+      )}
     </>
   );
 
@@ -220,6 +269,8 @@ export default function Customers() {
         <>
           <Toast ref={toast} />
           <DataTable
+            resizableColumns
+            columnResizeMode="expand"
             ref={dt}
             value={customers}
             removableSort
@@ -244,7 +295,18 @@ export default function Customers() {
           >
             <Column field="name" header="Name" sortable />
             <Column field="phoneNumber" header="Phone Number" sortable />
-            <Column field="note" header="Note" sortable />
+            <Column
+              field="note"
+              header="Note"
+              sortable
+              body={(rowData) => (
+                <InputTextarea
+                  className="w-full"
+                  value={rowData.note}
+                  readOnly
+                />
+              )}
+            />
             <Column field="customerCode" header="Customer Code" sortable />
             <Column field="accountNumber" header="Account Number" sortable />
             <Column
@@ -262,12 +324,7 @@ export default function Customers() {
               body={(rowData: Customer) =>
                 rowData.contacts.length === 0
                   ? "None"
-                  : rowData.contacts
-                      .map(
-                        (contact: Contact) =>
-                          `${contact.firstName} ${contact.lastName}`
-                      )
-                      .join(", ")
+                  : rowData.contacts.map((contact: Contact) => contact.fullName)
               }
             />
             <Column
@@ -285,121 +342,367 @@ export default function Customers() {
             footer={customerDialogFooter}
             onHide={hideDialog}
           >
-            <div className="field py-2 flex items-center gap-4">
-              <label htmlFor="name" className="font-bold basis-1/3">
-                Name
-              </label>
-              <InputText
-                id="name"
-                value={customer.name}
-                onChange={(event) =>
-                  setCustomer({ ...customer, name: event.target.value })
-                }
-                required
-                autoFocus
-                className={classNames("w-1/2", {
-                  "p-invalid": submitted && !customer.name,
-                })}
-              />
-              {submitted && !customer.name && (
-                <small className="p-error">Name is required.</small>
-              )}
-            </div>
-            <div className="field py-2 flex items-center gap-4">
-              <label htmlFor="phoneNumber" className="font-bold basis-1/3">
-                Phone number
-              </label>
-              <InputText
-                id="phoneNumber"
-                value={customer.phoneNumber}
-                onChange={(event) =>
-                  setCustomer({ ...customer, phoneNumber: event.target.value })
-                }
-                required
-                className={classNames("w-1/2", {
-                  "p-invalid": submitted && !customer.phoneNumber,
-                })}
-              />
-              {submitted && !customer.phoneNumber && (
-                <small className="p-error">Phone number is required.</small>
-              )}
-            </div>
-            <div className="field py-2 flex items-center gap-4">
-              <label htmlFor="note" className="font-bold basis-1/3">
-                Note
-              </label>
-              <InputText
-                id="note"
-                value={customer.note}
-                onChange={(event) =>
-                  setCustomer({ ...customer, note: event.target.value })
-                }
-                required
-                className={classNames("w-1/2", {
-                  "p-invalid": submitted && !customer.note,
-                })}
-              />
-              {submitted && !customer.note && (
-                <small className="p-error">Note is required.</small>
-              )}
-            </div>
-            <div className="field py-2 flex items-center gap-4">
-              <label htmlFor="customerCode" className="font-bold basis-1/3">
-                Customer code
-              </label>
-              <InputText
-                id="customerCode"
-                value={customer.customerCode}
-                onChange={(event) =>
-                  setCustomer({ ...customer, customerCode: event.target.value })
-                }
-                required
-                className={classNames("w-1/2", {
-                  "p-invalid": submitted && !customer.customerCode,
-                })}
-              />
-              {submitted && !customer.customerCode && (
-                <small className="p-error">Customer code is required.</small>
-              )}
-            </div>
-            <div className="field py-2 flex items-center gap-4">
-              <label htmlFor="accountNumber" className="font-bold basis-1/3">
-                Account number
-              </label>
-              <InputText
-                id="accountNumber"
-                value={customer.accountNumber}
-                onChange={(event) =>
-                  setCustomer({
-                    ...customer,
-                    accountNumber: event.target.value,
-                  })
-                }
-                required
-                className={classNames("w-1/2", {
-                  "p-invalid": submitted && !customer.accountNumber,
-                })}
-              />
-              {submitted && !customer.customerCode && (
-                <small className="p-error">Account number is required.</small>
-              )}
-            </div>
-            <div className="field py-2 flex items-center gap-4">
-              <label htmlFor="region" className="font-bold basis-1/3">
-                Region
-              </label>
-              <Dropdown
-                value={customer.region}
-                onChange={(event) =>
-                  setCustomer({ ...customer, region: event.target.value })
-                }
-                options={regions}
-                optionLabel="name"
-                placeholder="Select a Region"
-                filter
-                className="w-1/2"
-              />
-            </div>
+            {step === 0 ? (
+              <>
+                <div className="field py-2 flex items-center gap-4">
+                  <label htmlFor="name" className="font-bold basis-1/3">
+                    Name
+                  </label>
+                  <InputText
+                    id="name"
+                    value={customer.name}
+                    onChange={(event) =>
+                      setCustomer({ ...customer, name: event.target.value })
+                    }
+                    required
+                    autoFocus
+                    className={classNames("w-1/2", {
+                      "p-invalid": submitted && !customer.name,
+                    })}
+                  />
+                  {submitted && !customer.name && (
+                    <small className="p-error">Name is required.</small>
+                  )}
+                </div>
+                <div className="field py-2 flex items-center gap-4">
+                  <label htmlFor="phoneNumber" className="font-bold basis-1/3">
+                    Phone number
+                  </label>
+                  <InputText
+                    id="phoneNumber"
+                    value={customer.phoneNumber}
+                    onChange={(event) =>
+                      setCustomer({
+                        ...customer,
+                        phoneNumber: event.target.value,
+                      })
+                    }
+                    required
+                    className={classNames("w-1/2", {
+                      "p-invalid": submitted && !customer.phoneNumber,
+                    })}
+                  />
+                  {submitted && !customer.phoneNumber && (
+                    <small className="p-error">Phone number is required.</small>
+                  )}
+                </div>
+                <div className="field py-2 flex items-center gap-4">
+                  <label htmlFor="note" className="font-bold basis-1/3">
+                    Note
+                  </label>
+                  <InputTextarea
+                    id="note"
+                    value={customer.note}
+                    onChange={(event) =>
+                      setCustomer({ ...customer, note: event.target.value })
+                    }
+                    required
+                    className={classNames("w-1/2")}
+                  />
+                </div>
+                <div className="field py-2 flex items-center gap-4">
+                  <label htmlFor="customerCode" className="font-bold basis-1/3">
+                    Customer code
+                  </label>
+                  <InputText
+                    id="customerCode"
+                    value={customer.customerCode}
+                    onChange={(event) =>
+                      setCustomer({
+                        ...customer,
+                        customerCode: event.target.value,
+                      })
+                    }
+                    required
+                    className={classNames("w-1/2", {
+                      "p-invalid": submitted && !customer.customerCode,
+                    })}
+                  />
+                  {submitted && !customer.customerCode && (
+                    <small className="p-error">
+                      Customer code is required.
+                    </small>
+                  )}
+                </div>
+                <div className="field py-2 flex items-center gap-4">
+                  <label
+                    htmlFor="accountNumber"
+                    className="font-bold basis-1/3"
+                  >
+                    Account number
+                  </label>
+                  <InputText
+                    id="accountNumber"
+                    value={customer.accountNumber}
+                    onChange={(event) =>
+                      setCustomer({
+                        ...customer,
+                        accountNumber: event.target.value,
+                      })
+                    }
+                    required
+                    className={classNames("w-1/2", {
+                      "p-invalid": submitted && !customer.accountNumber,
+                    })}
+                  />
+                  {submitted && !customer.accountNumber && (
+                    <small className="p-error">
+                      Account number is required.
+                    </small>
+                  )}
+                </div>
+                <div className="field py-2 flex items-center gap-4">
+                  <label htmlFor="region" className="font-bold basis-1/3">
+                    Region
+                  </label>
+                  <Dropdown
+                    value={customer.region}
+                    onChange={(event) =>
+                      setCustomer({ ...customer, region: event.target.value })
+                    }
+                    options={regions}
+                    optionLabel="name"
+                    placeholder="Select a Region"
+                    filter
+                    className="w-1/2"
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex flex-wrap gap-4 my-2">
+                  <div className="flex items-center">
+                    <RadioButton
+                      inputId="existing"
+                      name="contact"
+                      value="existing"
+                      onChange={(e) => {
+                        setCustomer({ ...customer, contacts: [] });
+                        setContactOption(e.value);
+                      }}
+                      checked={contactOption === "existing"}
+                    />
+                    <label htmlFor="existing" className="ml-2">
+                      Use Existing Contacts
+                    </label>
+                  </div>
+                  <div className="flex items-center">
+                    <RadioButton
+                      inputId="new"
+                      name="contact"
+                      value="Mushroom"
+                      onChange={(e) => {
+                        setCustomer({ ...customer, contacts: [emptyContact] });
+                        setContactOption(e.value);
+                      }}
+                      checked={contactOption === "Mushroom"}
+                    />
+                    <label htmlFor="new" className="ml-2">
+                      Add New Contact
+                    </label>
+                  </div>
+                </div>
+                {contactOption === "existing" ? (
+                  <>
+                    <MultiSelect
+                      value={customer.contacts}
+                      onChange={(event) =>
+                        setCustomer({
+                          ...customer,
+                          contacts: event.target.value,
+                        })
+                      }
+                      options={contacts}
+                      optionLabel="fullName"
+                      placeholder="Select Contacts"
+                      filter
+                      maxSelectedLabels={3}
+                      selectedItemsLabel="{0} Contacts Selected"
+                    />
+                  </>
+                ) : (
+                  <>
+                    <div className="field py-2 flex items-center gap-4">
+                      <label
+                        htmlFor="firstName"
+                        className="font-bold basis-1/3"
+                      >
+                        First name
+                      </label>
+                      <InputText
+                        id="firstName"
+                        value={customer.contacts[0].firstName}
+                        onChange={(event) =>
+                          setCustomer({
+                            ...customer,
+                            contacts: [
+                              {
+                                ...customer.contacts[0],
+                                firstName: event.target.value,
+                              },
+                            ],
+                          })
+                        }
+                        required
+                        autoFocus
+                        className={classNames("w-1/2", {
+                          "p-invalid":
+                            submitted && !customer.contacts[0].firstName,
+                        })}
+                      />
+                      {submitted && !customer.contacts[0].firstName && (
+                        <small className="p-error">
+                          First name is required.
+                        </small>
+                      )}
+                    </div>
+                    {/* <div className="field py-2 flex items-center gap-4">
+                      <label htmlFor="lastName" className="font-bold basis-1/3">
+                        Last name
+                      </label>
+                      <InputText
+                        id="lastName"
+                        value={contact.lastName}
+                        onChange={(event) =>
+                          setContact({
+                            ...contact,
+                            lastName: event.target.value,
+                          })
+                        }
+                        required
+                        className={classNames("w-1/2", {
+                          "p-invalid": submitted && !contact.lastName,
+                        })}
+                      />
+                      {submitted && !contact.lastName && (
+                        <small className="p-error">
+                          Last name is required.
+                        </small>
+                      )}
+                    </div>
+                    <div className="field py-2 flex items-center gap-4">
+                      <label htmlFor="KOL" className="font-bold basis-1/3">
+                        KOL
+                      </label>
+                      <Checkbox
+                        id="KOL"
+                        checked={contact.KOL}
+                        onChange={(event) =>
+                          setContact({ ...contact, KOL: event.checked })
+                        }
+                        required
+                      />
+                    </div>
+                    <div className="field py-2 flex items-center gap-4">
+                      <label
+                        htmlFor="phoneNumber"
+                        className="font-bold basis-1/3"
+                      >
+                        Phone number
+                      </label>
+                      <InputText
+                        id="phoneNumber"
+                        value={contact.phoneNumber}
+                        onChange={(event) =>
+                          setContact({
+                            ...contact,
+                            phoneNumber: event.target.value,
+                          })
+                        }
+                        required
+                        className={classNames("w-1/2", {
+                          "p-invalid": submitted && !contact.phoneNumber,
+                        })}
+                      />
+                      {submitted && !contact.phoneNumber && (
+                        <small className="p-error">
+                          Phone number is required.
+                        </small>
+                      )}
+                    </div>
+                    <div className="field py-2 flex items-center gap-4">
+                      <label htmlFor="email" className="font-bold basis-1/3">
+                        Email
+                      </label>
+                      <InputText
+                        id="email"
+                        value={contact.email}
+                        onChange={(event) =>
+                          setContact({ ...contact, email: event.target.value })
+                        }
+                        required
+                        className={classNames("w-1/2", {
+                          "p-invalid": submitted && !contact.email,
+                        })}
+                      />
+                      {submitted && !contact.email && (
+                        <small className="p-error">Email is required.</small>
+                      )}
+                    </div>
+                    <div className="field py-2 flex items-center gap-4">
+                      <label htmlFor="title" className="font-bold basis-1/3">
+                        Title
+                      </label>
+                      <InputText
+                        id="title"
+                        value={contact.title}
+                        onChange={(event) =>
+                          setContact({ ...contact, title: event.target.value })
+                        }
+                        required
+                        className={classNames("w-1/2", {
+                          "p-invalid": submitted && !contact.title,
+                        })}
+                      />
+                      {submitted && !contact.title && (
+                        <small className="p-error">Title is required.</small>
+                      )}
+                    </div>
+                    <div className="field py-2 flex items-center gap-4">
+                      <label htmlFor="note" className="font-bold basis-1/3">
+                        Note
+                      </label>
+                      <InputTextarea
+                        id="note"
+                        value={contact.note}
+                        onChange={(event) =>
+                          setContact({ ...contact, note: event.target.value })
+                        }
+                        required
+                        className={classNames("w-1/2", {
+                          "p-invalid": submitted && !contact.note,
+                        })}
+                      />
+                      {submitted && !contact.note && (
+                        <small className="p-error">Note is required.</small>
+                      )}
+                    </div>
+                    <div className="field py-2 flex items-center gap-4">
+                      <label
+                        htmlFor="department"
+                        className="font-bold basis-1/3"
+                      >
+                        Department
+                      </label>
+                      <Dropdown
+                        value={contact.department}
+                        onChange={(event) =>
+                          setContact({
+                            ...contact,
+                            department: event.target.value,
+                          })
+                        }
+                        options={departments}
+                        optionLabel="name"
+                        placeholder="Select a Department"
+                        filter
+                        className="w-1/2"
+                      />
+                    </div> */}
+                  </>
+                )}
+              </>
+            )}
           </Dialog>
           <DeleteDialog
             visible={deleteCustomerDialog}

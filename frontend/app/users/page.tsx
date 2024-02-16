@@ -21,6 +21,7 @@ import { Dropdown } from "primereact/dropdown";
 const emptyUser: User = {
   firstName: "",
   lastName: "",
+  fullName: "",
   phoneNumber: "",
   email: "",
   department: {
@@ -350,7 +351,7 @@ export default function Users() {
             onConfirmDelete={deleteUser}
             entity={user}
             entityName="user"
-            entityDisplay={user.firstName + " " + user.lastName}
+            entityDisplay={user.fullName}
           />
         </>
       )}

@@ -18,10 +18,24 @@ import ContactService from "@/services/contact.service";
 import DepartmentService from "@/services/department.service";
 import { Dropdown } from "primereact/dropdown";
 import { Checkbox } from "primereact/checkbox";
+import { InputTextarea } from "primereact/inputtextarea";
+
+const emptyCustomer: Customer = {
+  name: "",
+  phoneNumber: "",
+  note: "",
+  customerCode: "",
+  accountNumber: "",
+  region: {
+    name: "",
+  },
+  contacts: [],
+};
 
 const emptyContact: Contact = {
   firstName: "",
   lastName: "",
+  fullName: "",
   KOL: false,
   phoneNumber: "",
   email: "",
@@ -30,19 +44,7 @@ const emptyContact: Contact = {
   department: {
     name: "",
   },
-  customers: [
-    {
-      name: "",
-      phoneNumber: "",
-      note: "",
-      customerCode: "",
-      accountNumber: "",
-      region: {
-        name: "",
-      },
-      contacts: [],
-    },
-  ],
+  customers: [emptyCustomer],
 };
 
 export default function Contacts() {
@@ -222,6 +224,8 @@ export default function Contacts() {
         <>
           <Toast ref={toast} />
           <DataTable
+            resizableColumns
+            columnResizeMode="expand"
             ref={dt}
             value={contacts}
             removableSort
@@ -249,6 +253,7 @@ export default function Contacts() {
             <Column field="firstName" header="First Name" sortable />
             <Column field="lastName" header="Last Name" sortable />
             <Column
+              className="text-center"
               field="KOL"
               header="KOL"
               sortable
@@ -257,7 +262,18 @@ export default function Contacts() {
             <Column field="phoneNumber" header="Phone Number" sortable />
             <Column field="email" header="Email" sortable />
             <Column field="title" header="Title" sortable />
-            <Column field="note" header="Note" sortable />
+            <Column
+              field="note"
+              header="Note"
+              sortable
+              body={(rowData) => (
+                <InputTextarea
+                  className="w-full"
+                  value={rowData.note}
+                  readOnly
+                />
+              )}
+            />
             <Column
               field="department"
               header="Department"
@@ -406,7 +422,7 @@ export default function Contacts() {
               <label htmlFor="note" className="font-bold basis-1/3">
                 Note
               </label>
-              <InputText
+              <InputTextarea
                 id="note"
                 value={contact.note}
                 onChange={(event) =>
@@ -445,7 +461,7 @@ export default function Contacts() {
             onConfirmDelete={deleteContact}
             entity={contact}
             entityName="contact"
-            entityDisplay={contact.name}
+            entityDisplay={contact.fullName}
           />
         </>
       )}
