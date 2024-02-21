@@ -5,8 +5,8 @@ export default function Header() {
   const { isOpen, setIsOpen, title } = useContext(NavbarContext);
 
   return (
-    <div className="py-4 px-8 shadow-md fixed top-0 left-0 z-[999] w-full bg-default">
-      <header className="  max-w-7xl flex justify-end items-center gap-4 mx-auto">
+    <div style={{direction:'rtl'}} className="py-4 px-8 shadow-md fixed top-0 left-0 z-[999] w-full bg-default">
+      <header className=" flex justify-end items-center gap-4 mx-auto">
         <h1 className="text-2xl font-bold">{title}</h1>
         <button
           onClick={() => setIsOpen(!isOpen)}
