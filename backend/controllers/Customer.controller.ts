@@ -111,7 +111,7 @@ export default class CustomerController {
             } else contactData.departmentId = null;
             contact = await Contact.create(contactData);
           }
-          await newCustomer.addContact(contact);
+          await newCustomer.addContact(contact.id);
         }
       }
       return res.json(newCustomer);
@@ -123,11 +123,13 @@ export default class CustomerController {
         let attribute = "";
         for (let i = 0; i < error.errors.length; i++) {
           if (error.errors[i].path === "phone_number") {
-            attribute = "Phone number";
+            attribute = "Customer phone number";
           } else if (error.errors[i].path === "account_number") {
-            attribute = "Account number";
+            attribute = "Customer account number";
           } else if (error.errors[i].path === "customer_code") {
             attribute = "Customer code";
+          } else if (error.errors[i].path === "email") {
+            attribute = "Contact email";
           }
         }
         return res.status(400).json({ error: `${attribute} must be unique.` });
@@ -146,13 +148,56 @@ export default class CustomerController {
         req.body.regionId = region.id;
         delete req.body.region;
       } else req.body.regionId = null;
-      const customer = await Customer.findByPk(req.params.id);
-      if (customer) {
-        const updatedCustomer = await customer.update(req.body);
-        res.json(updatedCustomer);
-      } else {
-        res.status(404).send("Customer not found");
+      const customer = await Customer.findByPk(req.params.id, modelFormat);
+      if (!customer) {
+        return res.status(400).json({ error: "Customer not found." });
       }
+      const contacts = req.body.contacts;
+      if (contacts && Array.isArray(contacts)) {
+        if (
+          contacts.length === 1 &&
+          (contacts[0].id === null || !("id" in contacts[0]))
+        ) {
+          if (contacts[0].department && contacts[0].department.id) {
+            const department = await Department.findByPk(
+              contacts[0].department.id
+            );
+            if (!department) {
+              return res.status(400).json({ error: "Department not found." });
+            }
+            contacts[0].departmentId = department.id;
+            delete contacts[0].department;
+          } else contacts[0].departmentId = null;
+          const contact = await Contact.create(contacts[0]);
+          await customer.addContact(contact.id);
+        } else {
+          const oldContactIds =
+            customer.contacts?.map((contact: Contact) => contact.id) ?? [];
+          const newContactIds = req.body.contacts.map(
+            (contact: Contact) => contact.id
+          );
+          for (let id of newContactIds) {
+            const contact = await Contact.findByPk(id);
+            if (!contact) {
+              return res.status(400).json({ error: "Contact not found." });
+            }
+          }
+          const contactIdsToDelete = oldContactIds.filter(
+            (id) => !newContactIds.includes(id)
+          );
+          const contactIdsToAdd = newContactIds.filter(
+            (id: bigint) => !oldContactIds.includes(id)
+          );
+          for (let id of contactIdsToDelete) {
+            await customer.removeContact(id);
+          }
+          for (let id of contactIdsToAdd) {
+            await customer.addContact(id);
+          }
+        }
+      }
+      await customer.update(req.body);
+      return res.json(customer);
     } catch (error) {
       if (
         error instanceof ValidationError &&

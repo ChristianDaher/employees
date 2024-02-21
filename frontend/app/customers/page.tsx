@@ -240,6 +240,9 @@ export default function Customers() {
         }
         fetchCustomers();
         fetchContacts();
+        setCustomer(emptyCustomer);
+        setContact(emptyContact);
+        setContactOption("existing");
         hideDialog();
       } catch (error) {
         toast.current.show({

@@ -81,6 +81,7 @@ export default function Contacts() {
     fetchContacts();
     fetchDepartments();
     fetchCustomers();
+    fetchRegions();
   }, []);
 
   async function fetchContacts() {
@@ -136,6 +137,9 @@ export default function Contacts() {
     setContactSubmitted(false);
     setCustomerSubmitted(false);
     setContactDialog(false);
+    setTimeout(() => {
+      setStep(0);
+    }, 400);
   }
 
   function hideDeleteContactDialog() {
@@ -229,7 +233,10 @@ export default function Contacts() {
           });
         }
         fetchContacts();
-        fetchCustomers();
+        fetchCustomers()
+        setContact(emptyContact);
+        setCustomer(emptyCustomer);
+        setCustomerOption("existing");;
         hideDialog();
       } catch (error) {
         toast.current.show({
