@@ -16,7 +16,6 @@ interface UserAttributes {
   id: bigint;
   firstName?: string;
   lastName?: string;
-  fullName?: string;
   phoneNumber?: string;
   email?: string;
   departmentId?: bigint;
@@ -58,11 +57,4 @@ export default class User extends Model<
 
   @BelongsTo(() => Department)
   department!: Department;
-
-  toJSON() {
-    return {
-      ...super.toJSON(),
-      fullName: this.firstName + " " + this.lastName,
-    };
-  }
 }

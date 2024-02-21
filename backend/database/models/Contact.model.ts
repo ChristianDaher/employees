@@ -19,7 +19,6 @@ interface ContactAttributes {
   id: bigint;
   firstName?: string;
   lastName?: string;
-  fullName?: string;
   KOL?: boolean;
   phoneNumber?: string;
   email?: string;
@@ -76,11 +75,4 @@ export default class Contact extends Model<
 
   @BelongsToMany(() => Customer, () => ContactCustomer)
   customers!: Customer[];
-
-  toJSON() {
-    return {
-      ...super.toJSON,
-      fullName: this.firstName + " " + this.lastName,
-    };
-  }
 }

@@ -4,7 +4,12 @@ import AuthLayout from "@/components/layouts/auth.layout";
 import Loading from "@/components/loading";
 import { classNames } from "primereact/utils";
 import { useEffect, useRef, useState, useContext } from "react";
-import { Contact, Customer, Region } from "@/utils/interfaces/models";
+import {
+  Contact,
+  Customer,
+  Region,
+  Department,
+} from "@/utils/interfaces/models";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Button } from "primereact/button";
@@ -21,6 +26,8 @@ import { Dropdown } from "primereact/dropdown";
 import { InputTextarea } from "primereact/inputtextarea";
 import { RadioButton } from "primereact/radiobutton";
 import { MultiSelect } from "primereact/multiselect";
+import { Checkbox } from "primereact/checkbox";
+import DepartmentService from "@/services/department.service";
 
 const emptyContact: Contact = {
   firstName: "",
@@ -46,18 +53,21 @@ const emptyCustomer: Customer = {
   region: {
     name: "",
   },
-  contacts: [emptyContact],
+  contacts: [],
 };
 
 export default function Customers() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [customer, setCustomer] = useState<Customer>(emptyCustomer);
+  const [contact, setContact] = useState<Contact>(emptyContact);
   const [regions, setRegions] = useState<Region[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [customerDialog, setCustomerDialog] = useState<boolean>(false);
   const [deleteCustomerDialog, setDeleteCustomerDialog] =
     useState<boolean>(false);
-  const [submitted, setSubmitted] = useState<boolean>(false);
+  const [customerSubmitted, setCustomerSubmitted] = useState<boolean>(false);
+  const [contactSubmitted, setContactSubmitted] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [globalSearchValue, setGlobalSearchValue] = useState<string>("");
   const toast = useRef<Toast>(null);
@@ -71,10 +81,16 @@ export default function Customers() {
     fetchCustomers();
     fetchRegions();
     fetchContacts();
+    fetchDepartments();
   }, []);
 
   async function fetchCustomers() {
     const customers = await CustomerService.getAll();
+    customers.forEach((customer: Customer) => {
+      customer.contacts.forEach((contact: Contact) => {
+        contact.fullName = `${contact.firstName} ${contact.lastName}`;
+      });
+    });
     setCustomers(customers);
     setIsLoading(false);
   }
@@ -86,7 +102,15 @@ export default function Customers() {
 
   async function fetchContacts() {
     const contacts = await ContactService.getAll();
+    contacts.forEach((contact: Contact) => {
+      contact.fullName = `${contact.firstName} ${contact.lastName}`;
+    });
     setContacts(contacts);
+  }
+
+  async function fetchDepartments() {
+    const departments = await DepartmentService.getAll();
+    setDepartments(departments);
   }
 
   const header = () => {
@@ -109,13 +133,15 @@ export default function Customers() {
 
   function openNew() {
     setCustomer(emptyCustomer);
-    setSubmitted(false);
+    setCustomerSubmitted(false);
+    setContactSubmitted(false);
     setCustomerDialog(true);
   }
 
   function hideDialog() {
-    setSubmitted(false);
+    setContactSubmitted(false);
     setCustomerDialog(false);
+    setCustomerSubmitted(false);
     setTimeout(() => {
       setStep(0);
     }, 400);
@@ -182,14 +208,19 @@ export default function Customers() {
   }
 
   async function saveCustomer() {
-    setSubmitted(true);
+    if (contactOption === "new") setContactSubmitted(true);
     if (
-      customer.name?.trim() &&
-      customer.phoneNumber?.trim() &&
-      customer.customerCode?.trim() &&
-      customer.accountNumber
+      (contact.firstName?.trim() &&
+        contact.lastName?.trim() &&
+        contact.phoneNumber?.trim() &&
+        contact.email?.trim() &&
+        contact.title?.trim() &&
+        contactOption === "new") ||
+      contactOption === "existing"
     ) {
       try {
+        customer.contacts =
+          contactOption === "existing" ? customer.contacts : [contact];
         if (customer.id) {
           await CustomerService.update(customer);
           toast.current.show({
@@ -208,7 +239,8 @@ export default function Customers() {
           });
         }
         fetchCustomers();
-        setCustomerDialog(false);
+        fetchContacts();
+        hideDialog();
       } catch (error) {
         toast.current.show({
           severity: "error",
@@ -221,14 +253,13 @@ export default function Customers() {
   }
 
   function next() {
-    setSubmitted(true);
+    setCustomerSubmitted(true);
     if (
       customer.name?.trim() &&
       customer.phoneNumber?.trim() &&
       customer.customerCode?.trim() &&
       customer.accountNumber
     ) {
-      setSubmitted(false);
       setStep(step + 1);
     }
   }
@@ -324,7 +355,9 @@ export default function Customers() {
               body={(rowData: Customer) =>
                 rowData.contacts.length === 0
                   ? "None"
-                  : rowData.contacts.map((contact: Contact) => contact.fullName)
+                  : rowData.contacts
+                      .map((contact: Contact) => contact.fullName)
+                      .join(", ")
               }
             />
             <Column
@@ -335,7 +368,7 @@ export default function Customers() {
           </DataTable>
           <Dialog
             visible={customerDialog}
-            style={{ width: "32rem" }}
+            style={{ width: "40rem" }}
             breakpoints={{ "960px": "75vw", "641px": "90vw" }}
             header="Customer Details"
             modal
@@ -357,10 +390,10 @@ export default function Customers() {
                     required
                     autoFocus
                     className={classNames("w-1/2", {
-                      "p-invalid": submitted && !customer.name,
+                      "p-invalid": customerSubmitted && !customer.name,
                     })}
                   />
-                  {submitted && !customer.name && (
+                  {customerSubmitted && !customer.name && (
                     <small className="p-error">Name is required.</small>
                   )}
                 </div>
@@ -379,10 +412,10 @@ export default function Customers() {
                     }
                     required
                     className={classNames("w-1/2", {
-                      "p-invalid": submitted && !customer.phoneNumber,
+                      "p-invalid": customerSubmitted && !customer.phoneNumber,
                     })}
                   />
-                  {submitted && !customer.phoneNumber && (
+                  {customerSubmitted && !customer.phoneNumber && (
                     <small className="p-error">Phone number is required.</small>
                   )}
                 </div>
@@ -415,10 +448,10 @@ export default function Customers() {
                     }
                     required
                     className={classNames("w-1/2", {
-                      "p-invalid": submitted && !customer.customerCode,
+                      "p-invalid": customerSubmitted && !customer.customerCode,
                     })}
                   />
-                  {submitted && !customer.customerCode && (
+                  {customerSubmitted && !customer.customerCode && (
                     <small className="p-error">
                       Customer code is required.
                     </small>
@@ -442,10 +475,10 @@ export default function Customers() {
                     }
                     required
                     className={classNames("w-1/2", {
-                      "p-invalid": submitted && !customer.accountNumber,
+                      "p-invalid": customerSubmitted && !customer.accountNumber,
                     })}
                   />
-                  {submitted && !customer.accountNumber && (
+                  {customerSubmitted && !customer.accountNumber && (
                     <small className="p-error">
                       Account number is required.
                     </small>
@@ -503,23 +536,23 @@ export default function Customers() {
                   </div>
                 </div>
                 {contactOption === "existing" ? (
-                  <>
-                    <MultiSelect
-                      value={customer.contacts}
-                      onChange={(event) =>
-                        setCustomer({
-                          ...customer,
-                          contacts: event.target.value,
-                        })
-                      }
-                      options={contacts}
-                      optionLabel="fullName"
-                      placeholder="Select Contacts"
-                      filter
-                      maxSelectedLabels={3}
-                      selectedItemsLabel="{0} Contacts Selected"
-                    />
-                  </>
+                  <MultiSelect
+                    value={contacts.filter((contact) =>
+                      customer.contacts.some((c) => c.id === contact.id)
+                    )}
+                    onChange={(event) =>
+                      setCustomer({
+                        ...customer,
+                        contacts: event.target.value,
+                      })
+                    }
+                    options={contacts}
+                    optionLabel="fullName"
+                    placeholder="Select Contacts"
+                    filter
+                    maxSelectedLabels={3}
+                    selectedItemsLabel="{0} Contacts Selected"
+                  />
                 ) : (
                   <>
                     <div className="field py-2 flex items-center gap-4">
@@ -531,32 +564,26 @@ export default function Customers() {
                       </label>
                       <InputText
                         id="firstName"
-                        value={customer.contacts[0].firstName}
+                        value={contact.firstName}
                         onChange={(event) =>
-                          setCustomer({
-                            ...customer,
-                            contacts: [
-                              {
-                                ...customer.contacts[0],
-                                firstName: event.target.value,
-                              },
-                            ],
+                          setContact({
+                            ...contact,
+                            firstName: event.target.value,
                           })
                         }
                         required
                         autoFocus
                         className={classNames("w-1/2", {
-                          "p-invalid":
-                            submitted && !customer.contacts[0].firstName,
+                          "p-invalid": contactSubmitted && !contact.firstName,
                         })}
                       />
-                      {submitted && !customer.contacts[0].firstName && (
+                      {contactSubmitted && !contact.firstName && (
                         <small className="p-error">
                           First name is required.
                         </small>
                       )}
                     </div>
-                    {/* <div className="field py-2 flex items-center gap-4">
+                    <div className="field py-2 flex items-center gap-4">
                       <label htmlFor="lastName" className="font-bold basis-1/3">
                         Last name
                       </label>
@@ -571,10 +598,10 @@ export default function Customers() {
                         }
                         required
                         className={classNames("w-1/2", {
-                          "p-invalid": submitted && !contact.lastName,
+                          "p-invalid": contactSubmitted && !contact.lastName,
                         })}
                       />
-                      {submitted && !contact.lastName && (
+                      {contactSubmitted && !contact.lastName && (
                         <small className="p-error">
                           Last name is required.
                         </small>
@@ -611,10 +638,10 @@ export default function Customers() {
                         }
                         required
                         className={classNames("w-1/2", {
-                          "p-invalid": submitted && !contact.phoneNumber,
+                          "p-invalid": contactSubmitted && !contact.phoneNumber,
                         })}
                       />
-                      {submitted && !contact.phoneNumber && (
+                      {contactSubmitted && !contact.phoneNumber && (
                         <small className="p-error">
                           Phone number is required.
                         </small>
@@ -632,10 +659,10 @@ export default function Customers() {
                         }
                         required
                         className={classNames("w-1/2", {
-                          "p-invalid": submitted && !contact.email,
+                          "p-invalid": contactSubmitted && !contact.email,
                         })}
                       />
-                      {submitted && !contact.email && (
+                      {contactSubmitted && !contact.email && (
                         <small className="p-error">Email is required.</small>
                       )}
                     </div>
@@ -651,10 +678,10 @@ export default function Customers() {
                         }
                         required
                         className={classNames("w-1/2", {
-                          "p-invalid": submitted && !contact.title,
+                          "p-invalid": contactSubmitted && !contact.title,
                         })}
                       />
-                      {submitted && !contact.title && (
+                      {contactSubmitted && !contact.title && (
                         <small className="p-error">Title is required.</small>
                       )}
                     </div>
@@ -669,13 +696,8 @@ export default function Customers() {
                           setContact({ ...contact, note: event.target.value })
                         }
                         required
-                        className={classNames("w-1/2", {
-                          "p-invalid": submitted && !contact.note,
-                        })}
+                        className={classNames("w-1/2")}
                       />
-                      {submitted && !contact.note && (
-                        <small className="p-error">Note is required.</small>
-                      )}
                     </div>
                     <div className="field py-2 flex items-center gap-4">
                       <label
@@ -698,7 +720,7 @@ export default function Customers() {
                         filter
                         className="w-1/2"
                       />
-                    </div> */}
+                    </div>
                   </>
                 )}
               </>

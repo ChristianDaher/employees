@@ -50,6 +50,9 @@ export default function Users() {
 
   async function fetchUsers() {
     const users = await UserService.getAll();
+    users.forEach((user: User) => {
+      user.fullName = `${user.firstName} ${user.lastName}`;
+    });
     setUsers(users);
     setIsLoading(false);
   }
@@ -243,7 +246,7 @@ export default function Users() {
           </DataTable>
           <Dialog
             visible={userDialog}
-            style={{ width: "32rem" }}
+            style={{ width: "40rem" }}
             breakpoints={{ "960px": "75vw", "641px": "90vw" }}
             header="User Details"
             modal

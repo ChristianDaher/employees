@@ -28,7 +28,7 @@ const DeleteDialog = ({
   return (
     <Dialog
       visible={visible}
-      style={{ width: "32rem" }}
+      style={{ width: "40rem" }}
       breakpoints={{ "960px": "75vw", "641px": "90vw" }}
       header="Delete Confirmation"
       modal

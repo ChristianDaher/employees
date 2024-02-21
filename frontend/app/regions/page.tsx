@@ -207,7 +207,7 @@ export default function Regions() {
           </DataTable>
           <Dialog
             visible={regionDialog}
-            style={{ width: "32rem" }}
+            style={{ width: "40rem" }}
             breakpoints={{ "960px": "75vw", "641px": "90vw" }}
             header="Region Details"
             modal
