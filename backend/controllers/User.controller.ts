@@ -78,7 +78,6 @@ export default class UserController {
       const newUser = await User.create(req.body);
       return res.json(newUser);
     } catch (error) {
-      console.log(error);
       if (
         error instanceof ValidationError &&
         error.name === "SequelizeUniqueConstraintError"

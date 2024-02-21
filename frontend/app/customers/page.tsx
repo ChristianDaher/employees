@@ -523,12 +523,12 @@ export default function Customers() {
                     <RadioButton
                       inputId="new"
                       name="contact"
-                      value="Mushroom"
+                      value="new"
                       onChange={(e) => {
                         setCustomer({ ...customer, contacts: [emptyContact] });
                         setContactOption(e.value);
                       }}
-                      checked={contactOption === "Mushroom"}
+                      checked={contactOption === "new"}
                     />
                     <label htmlFor="new" className="ml-2">
                       Add New Contact

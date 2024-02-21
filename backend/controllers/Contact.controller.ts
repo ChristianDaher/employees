@@ -3,6 +3,7 @@ import Contact from "../database/models/Contact.model";
 import Department from "../database/models/Department.model";
 import Customer from "../database/models/Customer.model";
 import { ValidationError, Op } from "sequelize";
+import Region from "../database/models/Region.model";
 
 const modelFormat = {
   attributes: { exclude: ["departmentId"] },
@@ -93,14 +94,38 @@ export default class ContactController {
         delete req.body.department;
       } else req.body.departmentId = null;
       const newContact = await Contact.create(req.body);
+      const customers = req.body.customers;
+      if (customers && Array.isArray(customers)) {
+        for (let customerData of customers) {
+          let customer;
+          if (customerData.id) {
+            customer = await Customer.findByPk(customerData.id);
+            if (!customer) {
+              return res.status(400).json({ error: "Customer not found." });
+            }
+          } else {
+            if (customerData.region && customerData.region.id) {
+              const region = await Region.findByPk(
+                customerData.region.id
+              );
+              if (!region) {
+                return res.status(400).json({ error: "Region not found." });
+              }
+              customerData.regionId = region.id;
+              delete customerData.region;
+            } else customerData.regionId = null;
+            customer = await Customer.create(customerData);
+          }
+          await newContact.addCustomer(customer);
+        }
+      }
       return res.json(newContact);
     } catch (error) {
-      console.log(error);
       if (
         error instanceof ValidationError &&
         error.name === "SequelizeUniqueConstraintError"
       ) {
-        return res.status(400).json({ error: "Email must be unique." });
+        return res.status(400).json({ error: "Contact email must be unique." });
       }
       return res.status(500).json({ error: "An unexpected error occurred." });
     }

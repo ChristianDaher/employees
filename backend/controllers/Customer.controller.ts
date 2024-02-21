@@ -3,6 +3,7 @@ import Customer from "../database/models/Customer.model";
 import Region from "../database/models/Region.model";
 import Contact from "../database/models/Contact.model";
 import { ValidationError, Op } from "sequelize";
+import Department from "../database/models/Department.model";
 
 const modelFormat = {
   attributes: { exclude: ["regionId"] },
@@ -88,20 +89,44 @@ export default class CustomerController {
         delete req.body.region;
       } else req.body.regionId = null;
       const newCustomer = await Customer.create(req.body);
+      const contacts = req.body.contacts;
+      if (contacts && Array.isArray(contacts)) {
+        for (let contactData of contacts) {
+          let contact;
+          if (contactData.id) {
+            contact = await Contact.findByPk(contactData.id);
+            if (!contact) {
+              return res.status(400).json({ error: "Contact not found." });
+            }
+          } else {
+            if (contactData.department && contactData.department.id) {
+              const department = await Department.findByPk(
+                contactData.department.id
+              );
+              if (!department) {
+                return res.status(400).json({ error: "Department not found." });
+              }
+              contactData.departmentId = department.id;
+              delete contactData.department;
+            } else contactData.departmentId = null;
+            contact = await Contact.create(contactData);
+          }
+          await newCustomer.addContact(contact);
+        }
+      }
       return res.json(newCustomer);
     } catch (error) {
-      console.log(error);
       if (
         error instanceof ValidationError &&
         error.name === "SequelizeUniqueConstraintError"
       ) {
         let attribute = "";
         for (let i = 0; i < error.errors.length; i++) {
-          if (error.errors[i].path === "phoneNumber") {
+          if (error.errors[i].path === "phone_number") {
             attribute = "Phone number";
-          } else if (error.errors[i].path === "accountNumber") {
+          } else if (error.errors[i].path === "account_number") {
             attribute = "Account number";
-          } else if (error.errors[i].path === "customerCode") {
+          } else if (error.errors[i].path === "customer_code") {
             attribute = "Customer code";
           }
         }
@@ -135,11 +160,11 @@ export default class CustomerController {
       ) {
         let attribute = "";
         for (let i = 0; i < error.errors.length; i++) {
-          if (error.errors[i].path === "phoneNumber") {
+          if (error.errors[i].path === "phone_number") {
             attribute = "Phone number";
-          } else if (error.errors[i].path === "accountNumber") {
+          } else if (error.errors[i].path === "account_number") {
             attribute = "Account number";
-          } else if (error.errors[i].path === "customerCode") {
+          } else if (error.errors[i].path === "customer_code") {
             attribute = "Customer code";
           }
         }

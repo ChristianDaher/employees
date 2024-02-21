@@ -70,4 +70,11 @@ export default class Customer extends Model<
 
   @BelongsToMany(() => Contact, () => ContactCustomer)
   contacts!: Contact[];
+
+  async addContact(contact: Contact) {
+    await ContactCustomer.create({
+      customerId: this.id,
+      contactId: contact.id,
+    });
+  }
 }
