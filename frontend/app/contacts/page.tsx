@@ -28,7 +28,7 @@ import { InputTextarea } from "primereact/inputtextarea";
 import { RadioButton } from "primereact/radiobutton";
 import { MultiSelect } from "primereact/multiselect";
 import RegionService from "@/services/region.service";
-import { saveAsExcelFile } from "@/utils/helpers";
+import { saveAsExcelFile, isValidEmail } from "@/utils/helpers";
 
 const emptyCustomer: Customer = {
   name: "",
@@ -302,6 +302,7 @@ export default function Contacts() {
       contact.lastName?.trim() &&
       contact.phoneNumber?.trim() &&
       contact.email?.trim() &&
+      isValidEmail(contact.email) &&
       contact.title?.trim()
     ) {
       setStep(step + 1);
@@ -517,12 +518,15 @@ export default function Contacts() {
                     }
                     required
                     className={classNames("w-1/2", {
-                      "p-invalid": contactSubmitted && !contact.email,
+                      "p-invalid":
+                        contactSubmitted &&
+                        (!contact.email || !isValidEmail(contact.email)),
                     })}
                   />
-                  {contactSubmitted && !contact.email && (
-                    <small className="p-error">Email is required.</small>
-                  )}
+                  {contactSubmitted &&
+                    (!contact.email || !isValidEmail(contact.email)) && (
+                      <small className="p-error">Email is required or invalid.</small>
+                    )}
                 </div>
                 <div className="field py-2 flex items-center gap-4">
                   <label htmlFor="title" className="font-bold basis-1/3">

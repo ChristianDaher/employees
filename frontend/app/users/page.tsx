@@ -17,7 +17,7 @@ import DeleteDialog from "@/components/custom-datatable/dialog-delete";
 import UserService from "@/services/user.service";
 import DepartmentService from "@/services/department.service";
 import { Dropdown } from "primereact/dropdown";
-import { saveAsExcelFile } from "@/utils/helpers";
+import { saveAsExcelFile, isValidEmail } from "@/utils/helpers";
 
 const emptyUser: User = {
   firstName: "",
@@ -190,6 +190,7 @@ export default function Users() {
       user.firstName?.trim() &&
       user.lastName?.trim() &&
       user.email?.trim() &&
+      isValidEmail(user.email) &&
       user.phoneNumber?.trim()
     ) {
       try {
@@ -337,11 +338,12 @@ export default function Users() {
                 }
                 required
                 className={classNames("w-1/2", {
-                  "p-invalid": submitted && !user.email,
+                  "p-invalid":
+                    submitted && (!user.email || !isValidEmail(user.email)),
                 })}
               />
-              {submitted && !user.email && (
-                <small className="p-error">Email is required.</small>
+              {submitted && (!user.email || !isValidEmail(user.email)) && (
+                <small className="p-error">Email is required or invalid.</small>
               )}
             </div>
             <div className="field py-2 flex items-center gap-4">

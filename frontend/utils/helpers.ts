@@ -14,3 +14,8 @@ export function saveAsExcelFile(buffer: any, fileName: string) {
     }
   });
 }
+
+export function isValidEmail(emailString: string): boolean {
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  return emailRegex.test(emailString);
+}
