@@ -11,7 +11,7 @@ export default function AuthLayout({
       <Header />
       <Navbar />
       <main className="pt-32 px-8 pb-8">
-        <div className="bg-default rounded-md shadow-md p-8  mx-auto">
+        <div className="bg-default rounded-md shadow-md p-8 mx-auto">
           {children}
         </div>
       </main>
