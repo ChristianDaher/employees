@@ -28,6 +28,7 @@ import { RadioButton } from "primereact/radiobutton";
 import { MultiSelect } from "primereact/multiselect";
 import { Checkbox } from "primereact/checkbox";
 import DepartmentService from "@/services/department.service";
+import { saveAsExcelFile } from "@/utils/helpers";
 
 const emptyContact: Contact = {
   firstName: "",
@@ -117,7 +118,7 @@ export default function Customers() {
     return (
       <CustomDatatableHeader
         onClickNew={openNew}
-        onClickExport={exportCSV}
+        onClickExport={exportExcel}
         globalSearchValue={globalSearchValue}
         onSearch={search}
       />
@@ -161,8 +162,47 @@ export default function Customers() {
     setDeleteCustomerDialog(true);
   }
 
-  function exportCSV() {
-    dt.current?.exportCSV();
+  function exportExcel() {
+    import("xlsx").then((xlsx) => {
+      const simpleCustomers = customers.map((customer) => {
+        const {
+          id,
+          name,
+          phoneNumber,
+          note,
+          customerCode,
+          accountNumber,
+          region,
+          contacts,
+          ...otherProps
+        } = customer;
+        return {
+          name,
+          phoneNumber,
+          note,
+          customerCode,
+          accountNumber,
+          region: customer.region?.name ?? "Unspecified",
+          contacts:
+            customer.contacts.length === 0
+              ? "None"
+              : customer.contacts
+                  .map((contact: Contact) => contact.fullName)
+                  .join(", "),
+          ...otherProps,
+        };
+      });
+      const worksheet = xlsx.utils.json_to_sheet(simpleCustomers);
+      const workbook = {
+        Sheets: { customers: worksheet },
+        SheetNames: ["customers"],
+      };
+      const excelBuffer = xlsx.write(workbook, {
+        bookType: "xlsx",
+        type: "array",
+      });
+      saveAsExcelFile(excelBuffer, "customers");
+    });
   }
 
   const actionBodyTemplate = (rowData: Customer) => {

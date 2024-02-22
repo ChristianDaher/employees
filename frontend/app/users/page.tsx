@@ -17,6 +17,7 @@ import DeleteDialog from "@/components/custom-datatable/dialog-delete";
 import UserService from "@/services/user.service";
 import DepartmentService from "@/services/department.service";
 import { Dropdown } from "primereact/dropdown";
+import { saveAsExcelFile } from "@/utils/helpers";
 
 const emptyUser: User = {
   firstName: "",
@@ -66,7 +67,7 @@ export default function Users() {
     return (
       <CustomDatatableHeader
         onClickNew={openNew}
-        onClickExport={exportCSV}
+        onClickExport={exportExcel}
         globalSearchValue={globalSearchValue}
         onSearch={search}
       />
@@ -105,8 +106,40 @@ export default function Users() {
     setDeleteUserDialog(true);
   }
 
-  function exportCSV() {
-    dt.current?.exportCSV();
+  function exportExcel() {
+    import("xlsx").then((xlsx) => {
+      const simpleUsers = users.map((user) => {
+        const {
+          id,
+          firstName,
+          lastName,
+          fullName,
+          phoneNumber,
+          email,
+          department,
+          ...otherProps
+        } = user;
+        return {
+          firstName,
+          lastName,
+          fullName,
+          phoneNumber,
+          email,
+          department: user.department?.name ?? "Unspecified",
+          ...otherProps,
+        };
+      });
+      const worksheet = xlsx.utils.json_to_sheet(simpleUsers);
+      const workbook = {
+        Sheets: { users: worksheet },
+        SheetNames: ["users"],
+      };
+      const excelBuffer = xlsx.write(workbook, {
+        bookType: "xlsx",
+        type: "array",
+      });
+      saveAsExcelFile(excelBuffer, "users");
+    });
   }
 
   const actionBodyTemplate = (rowData: User) => {

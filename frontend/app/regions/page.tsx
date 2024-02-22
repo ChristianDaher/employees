@@ -15,6 +15,7 @@ import { InputText } from "primereact/inputtext";
 import { NavbarContext } from "@/components/contexts/navbar.context";
 import DeleteDialog from "@/components/custom-datatable/dialog-delete";
 import RegionService from "@/services/region.service";
+import { saveAsExcelFile } from "@/utils/helpers";
 
 const emptyRegion: Region = {
   name: "",
@@ -24,8 +25,7 @@ export default function Regions() {
   const [regions, setRegions] = useState<Region[]>([]);
   const [region, setRegion] = useState<Region>(emptyRegion);
   const [regionDialog, setRegionDialog] = useState<boolean>(false);
-  const [deleteRegionDialog, setDeleteRegionDialog] =
-    useState<boolean>(false);
+  const [deleteRegionDialog, setDeleteRegionDialog] = useState<boolean>(false);
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [globalSearchValue, setGlobalSearchValue] = useState<string>("");
@@ -48,7 +48,7 @@ export default function Regions() {
     return (
       <CustomDatatableHeader
         onClickNew={openNew}
-        onClickExport={exportCSV}
+        onClickExport={exportExcel}
         globalSearchValue={globalSearchValue}
         onSearch={search}
       />
@@ -87,8 +87,25 @@ export default function Regions() {
     setDeleteRegionDialog(true);
   }
 
-  function exportCSV() {
-    dt.current?.exportCSV();
+  function exportExcel() {
+    import("xlsx").then((xlsx) => {
+      const simpleRegions = regions.map((region) => {
+        const { id, ...otherProps } = region;
+        return {
+          ...otherProps,
+        };
+      });
+      const worksheet = xlsx.utils.json_to_sheet(simpleRegions);
+      const workbook = {
+        Sheets: { regions: worksheet },
+        SheetNames: ["regions"],
+      };
+      const excelBuffer = xlsx.write(workbook, {
+        bookType: "xlsx",
+        type: "array",
+      });
+      saveAsExcelFile(excelBuffer, "regions");
+    });
   }
 
   const actionBodyTemplate = (rowData: Region) => {

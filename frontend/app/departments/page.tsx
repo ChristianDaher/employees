@@ -15,6 +15,7 @@ import { InputText } from "primereact/inputtext";
 import { NavbarContext } from "@/components/contexts/navbar.context";
 import DeleteDialog from "@/components/custom-datatable/dialog-delete";
 import DepartmentService from "@/services/department.service";
+import { saveAsExcelFile } from "@/utils/helpers";
 
 const emptyDepartment: Department = {
   name: "",
@@ -48,7 +49,7 @@ export default function Departments() {
     return (
       <CustomDatatableHeader
         onClickNew={openNew}
-        onClickExport={exportCSV}
+        onClickExport={exportExcel}
         globalSearchValue={globalSearchValue}
         onSearch={search}
       />
@@ -87,8 +88,25 @@ export default function Departments() {
     setDeleteDepartmentDialog(true);
   }
 
-  function exportCSV() {
-    dt.current?.exportCSV();
+  function exportExcel() {
+    import("xlsx").then((xlsx) => {
+      const simpleDepartments = departments.map((department) => {
+        const { id, ...otherProps } = department;
+        return {
+          ...otherProps,
+        };
+      });
+      const worksheet = xlsx.utils.json_to_sheet(simpleDepartments);
+      const workbook = {
+        Sheets: { departments: worksheet },
+        SheetNames: ["departments"],
+      };
+      const excelBuffer = xlsx.write(workbook, {
+        bookType: "xlsx",
+        type: "array",
+      });
+      saveAsExcelFile(excelBuffer, "departments");
+    });
   }
 
   const actionBodyTemplate = (rowData: Department) => {

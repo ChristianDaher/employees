@@ -28,6 +28,7 @@ import { InputTextarea } from "primereact/inputtextarea";
 import { RadioButton } from "primereact/radiobutton";
 import { MultiSelect } from "primereact/multiselect";
 import RegionService from "@/services/region.service";
+import { saveAsExcelFile } from "@/utils/helpers";
 
 const emptyCustomer: Customer = {
   name: "",
@@ -112,7 +113,7 @@ export default function Contacts() {
     return (
       <CustomDatatableHeader
         onClickNew={openNew}
-        onClickExport={exportCSV}
+        onClickExport={exportExcel}
         globalSearchValue={globalSearchValue}
         onSearch={search}
       />
@@ -156,8 +157,53 @@ export default function Contacts() {
     setDeleteContactDialog(true);
   }
 
-  function exportCSV() {
-    dt.current?.exportCSV();
+  function exportExcel() {
+    import("xlsx").then((xlsx) => {
+      const simpleContacts = contacts.map((contact) => {
+        const {
+          id,
+          firstName,
+          lastName,
+          fullName,
+          KOL,
+          phoneNumber,
+          email,
+          title,
+          note,
+          department,
+          customers,
+          ...otherProps
+        } = contact;
+        return {
+          firstName,
+          lastName,
+          fullName,
+          KOL,
+          phoneNumber,
+          email,
+          title,
+          note,
+          department: contact.department?.name ?? "Unspecified",
+          customers:
+            contact.customers.length === 0
+              ? "None"
+              : contact.customers
+                  .map((customer: Customer) => customer.name)
+                  .join(", "),
+          ...otherProps,
+        };
+      });
+      const worksheet = xlsx.utils.json_to_sheet(simpleContacts);
+      const workbook = {
+        Sheets: { contacts: worksheet },
+        SheetNames: ["contacts"],
+      };
+      const excelBuffer = xlsx.write(workbook, {
+        bookType: "xlsx",
+        type: "array",
+      });
+      saveAsExcelFile(excelBuffer, "contacts");
+    });
   }
 
   const actionBodyTemplate = (rowData: Contact) => {
@@ -233,10 +279,10 @@ export default function Contacts() {
           });
         }
         fetchContacts();
-        fetchCustomers()
+        fetchCustomers();
         setContact(emptyContact);
         setCustomer(emptyCustomer);
-        setCustomerOption("existing");;
+        setCustomerOption("existing");
         hideDialog();
       } catch (error) {
         toast.current.show({
