@@ -7,6 +7,7 @@ import {
   Column,
   DataType,
   ForeignKey,
+  BelongsTo,
 } from "sequelize-typescript";
 import Contact from "./Contact.model";
 import Customer from "./Customer.model";
@@ -42,4 +43,10 @@ export default class ContactCustomer extends Model<
   @ForeignKey(() => Customer)
   @Column({ field: "customer_id", type: DataType.BIGINT.UNSIGNED })
   customerId!: bigint;
+
+  @BelongsTo(() => Contact)
+  contact!: Contact;
+
+  @BelongsTo(() => Customer)
+  customer!: Customer;
 }

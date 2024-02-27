@@ -6,6 +6,7 @@ import regionRoutes from "./routes/Region.route";
 import userRoutes from "./routes/User.route";
 import customerRoutes from "./routes/Customer.route";
 import contactRoutes from "./routes/Contact.route";
+import planRoutes from "./routes/Plan.route";
 
 require("dotenv").config();
 
@@ -20,6 +21,7 @@ app.use("/regions", regionRoutes);
 app.use("/users", userRoutes);
 app.use("/customers", customerRoutes);
 app.use("/contacts", contactRoutes);
+app.use("/plans", planRoutes);
 
 db.authenticate()
   .then(() =>
