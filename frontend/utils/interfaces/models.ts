@@ -53,6 +53,31 @@ export interface Contact {
   updatedAt?: Date;
 }
 
+export interface ContactCustomer {
+  id?: bigint;
+  contact: Contact;
+  customer: Customer;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface Plan {
+  id?: bigint;
+  date: Date;
+  user: User;
+  contactCustomer: ContactCustomer;
+  how: string;
+  objective: string;
+  output: string;
+  offer: string;
+  meeting: string;
+  status: string;
+  note: string;
+  completedAt?: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
 export interface Service<T> {
   API_URL: string;
   getAll(): Promise<T[]>;
