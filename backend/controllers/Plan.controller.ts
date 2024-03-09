@@ -39,42 +39,59 @@ export default class PlanController {
   static async searchPlans(req: Request, res: Response) {
     const query = req.query.q?.toString();
     let plans;
-    // if (!query) {
-    //   plans = await User.findAll(modelFormat);
-    // } else {
-    //   plans = await User.findAll({
-    //     ...modelFormat,
-    //     where: {
-    //       [Op.or]: [
-    //         {
-    //           firstName: {
-    //             [Op.like]: `%${query}%`,
-    //           },
-    //         },
-    //         {
-    //           lastName: {
-    //             [Op.like]: `%${query}%`,
-    //           },
-    //         },
-    //         {
-    //           phoneNumber: {
-    //             [Op.like]: `%${query}%`,
-    //           },
-    //         },
-    //         {
-    //           email: {
-    //             [Op.like]: `%${query}%`,
-    //           },
-    //         },
-    //         {
-    //           "$department.name$": {
-    //             [Op.like]: `%${query}%`,
-    //           },
-    //         },
-    //       ],
-    //     },
-    //   });
-    // }
+    if (!query) {
+      plans = await Plan.findAll(modelFormat);
+    } else {
+      plans = await Plan.findAll({
+        ...modelFormat,
+        where: {
+          [Op.or]: {
+            // date: {
+            //   [Op.gte]: new Date(query),
+            // },
+            how: {
+              [Op.like]: `%${query}%`,
+            },
+            objective: {
+              [Op.like]: `%${query}%`,
+            },
+            output: {
+              [Op.like]: `%${query}%`,
+            },
+            offer: {
+              [Op.like]: `%${query}%`,
+            },
+            meeting: {
+              [Op.like]: `%${query}%`,
+            },
+            status: {
+              [Op.like]: `%${query}%`,
+            },
+            note: {
+              [Op.like]: `%${query}%`,
+            },
+            // completedAt: {
+            //   [Op.gte]: new Date(query),
+            // },
+            "$user.first_name$": {
+              [Op.like]: `%${query}%`,
+            },
+            "$user.last_name$": {
+              [Op.like]: `%${query}%`,
+            },
+            "$contactCustomer.contact.first_name$": {
+              [Op.like]: `%${query}%`,
+            },
+            "$contactCustomer.contact.last_name$": {
+              [Op.like]: `%${query}%`,
+            },
+            "$contactCustomer.customer.name$": {
+              [Op.like]: `%${query}%`,
+            },
+          },
+        },
+      });
+    }
     res.json(plans);
   }
 
@@ -88,56 +105,62 @@ export default class PlanController {
   }
 
   static async createPlan(req: Request, res: Response): Promise<Response> {
-    // try {
-    //   if (req.body.department && req.body.department.id) {
-    //     const department = await Department.findByPk(req.body.department.id);
-    //     if (!department) {
-    //       return res.status(400).json({ error: "Department not found." });
-    //     }
-    //     req.body.departmentId = department.id;
-    //     delete req.body.department;
-    //   } else req.body.departmentId = null;
-    //   const newUser = await User.create(req.body);
-    //   return res.json(newUser);
-    // } catch (error) {
-    //   if (
-    //     error instanceof ValidationError &&
-    //     error.name === "SequelizeUniqueConstraintError"
-    //   ) {
-    //     return res.status(400).json({ error: "User email must be unique." });
-    //   }
-    //   return res.status(500).json({ error: "An unexpected error occurred." });
-    // }
-    return res.status(500).json({ error: "Go fuck yourself." });
+    try {
+      if (req.body.user && req.body.user.id) {
+        const user = await User.findByPk(req.body.user.id);
+        if (!user) {
+          return res.status(400).json({ error: "User not found." });
+        }
+        req.body.userId = user.id;
+        delete req.body.user;
+      } else req.body.userId = null;
+      if (req.body.contactCustomer && req.body.contactCustomer.id) {
+        const contactCustomer = await ContactCustomer.findByPk(
+          req.body.contactCustomer.id
+        );
+        if (!contactCustomer) {
+          return res.status(400).json({ error: "ContactCustomer not found." });
+        }
+        req.body.contactCustomerId = contactCustomer.id;
+        delete req.body.contactCustomer;
+      }
+      const newPlan = await Plan.create(req.body);
+      return res.json(newPlan);
+    } catch (error) {
+      return res.status(500).json({ error: "An unexpected error occurred." });
+    }
   }
 
   static async updatePlan(req: Request<{ id: string }>, res: Response) {
-    // try {
-    //   if (req.body.department && req.body.department.id) {
-    //     const department = await Department.findByPk(req.body.department.id);
-    //     if (!department) {
-    //       return res.status(400).json({ error: "Department not found." });
-    //     }
-    //     req.body.departmentId = department.id;
-    //     delete req.body.department;
-    //   } else req.body.departmentId = null;
-    //   const user = await User.findByPk(req.params.id);
-    //   if (user) {
-    //     const updatedUser = await user.update(req.body);
-    //     res.json(updatedUser);
-    //   } else {
-    //     res.status(404).send("User not found");
-    //   }
-    // } catch (error) {
-    //   if (
-    //     error instanceof ValidationError &&
-    //     error.name === "SequelizeUniqueConstraintError"
-    //   ) {
-    //     return res.status(400).json({ error: "User email must be unique." });
-    //   }
-    //   return res.status(500).json({ error: "An unexpected error occurred." });
-    // }
-    return res.status(500).json({ error: "Go fuck yourself." });
+    try {
+      if (req.body.user && req.body.user.id) {
+        const user = await User.findByPk(req.body.user.id);
+        if (!user) {
+          return res.status(400).json({ error: "User not found." });
+        }
+        req.body.userId = user.id;
+        delete req.body.user;
+      } else req.body.userId = null;
+      if (req.body.contactCustomer && req.body.contactCustomer.id) {
+        const contactCustomer = await ContactCustomer.findByPk(
+          req.body.contactCustomer.id
+        );
+        if (!contactCustomer) {
+          return res.status(400).json({ error: "ContactCustomer not found." });
+        }
+        req.body.contactCustomerId = contactCustomer.id;
+        delete req.body.contactCustomer;
+      }
+      const plan = await Plan.findByPk(req.params.id);
+      if (plan) {
+        const updatedPlan = await plan.update(req.body);
+        res.json(updatedPlan);
+      } else {
+        res.status(404).send("Plan not found");
+      }
+    } catch (error) {
+      return res.status(500).json({ error: "An unexpected error occurred." });
+    }
   }
 
   static async deletePlan(req: Request<{ id: string }>, res: Response) {

@@ -18,12 +18,12 @@ export default class UserController {
     req: Request<{ id: string }>,
     res: Response
   ) {
-    const contacttCustomer = await ContactCustomer.findByPk(
+    const contactCustomer = await ContactCustomer.findByPk(
       req.params.id,
       modelFormat
     );
-    if (contacttCustomer) {
-      res.json(contacttCustomer);
+    if (contactCustomer) {
+      res.json(contactCustomer);
     } else {
       res.status(404).send("Contact Customer not found");
     }

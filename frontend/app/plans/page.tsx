@@ -4,7 +4,7 @@ import AuthLayout from "@/components/layouts/auth.layout";
 import Loading from "@/components/loading";
 import { classNames } from "primereact/utils";
 import { useEffect, useRef, useState, useContext } from "react";
-import { Plan, ContactCustomer } from "@/utils/interfaces/models";
+import { Plan, ContactCustomer, User } from "@/utils/interfaces/models";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Button } from "primereact/button";
@@ -15,9 +15,12 @@ import { InputText } from "primereact/inputtext";
 import { NavbarContext } from "@/components/contexts/navbar.context";
 import DeleteDialog from "@/components/custom-datatable/dialog-delete";
 import PlanService from "@/services/plan.service";
+import UserService from "@/services/user.service";
 import ContactCustomerService from "@/services/contact-customer.service";
 import { Dropdown } from "primereact/dropdown";
 import { saveAsExcelFile } from "@/utils/helpers";
+import { Calendar } from "primereact/calendar";
+import { InputTextarea } from "primereact/inputtextarea";
 
 const emptyPlan: Plan = {
   date: new Date(),
@@ -29,11 +32,7 @@ const emptyPlan: Plan = {
     email: "",
     department: {
       name: "",
-      createdAt: new Date(),
-      updatedAt: new Date(),
     },
-    createdAt: new Date(),
-    updatedAt: new Date(),
   },
   contactCustomer: {
     contact: {
@@ -75,6 +74,7 @@ const emptyPlan: Plan = {
 export default function Plans() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [plan, setPlan] = useState<Plan>(emptyPlan);
+  const [users, setUsers] = useState<User[]>([]);
   const [contactCustomers, setContactCustomers] = useState<ContactCustomer[]>(
     []
   );
@@ -90,6 +90,7 @@ export default function Plans() {
   useEffect(() => {
     setTitle("Plans");
     fetchPlans();
+    fetchUsers();
     fetchContactCustomers();
   }, []);
 
@@ -98,7 +99,14 @@ export default function Plans() {
     plans.forEach((plan: Plan) => {
       if (plan.user)
         plan.user.fullName = `${plan.user.firstName} ${plan.user.lastName}`;
-      plan.contactCustomer.contact.fullName = `${plan.user.firstName} ${plan.user.lastName}`;
+      plan.contactCustomer.contact.fullName = `${plan.contactCustomer.contact.firstName} ${plan.contactCustomer.contact.lastName}`;
+      plan.contactCustomer.label = `${plan.contactCustomer.contact.fullName} for ${plan.contactCustomer.customer.name}`;
+      plan.contactCustomer.contact.departmentId =
+        plan.contactCustomer.contact.department.id;
+      delete plan.contactCustomer.contact.department;
+      plan.contactCustomer.customer.regionId =
+        plan.contactCustomer.customer.region.id;
+      delete plan.contactCustomer.customer.region;
     });
     setPlans(plans);
     setIsLoading(false);
@@ -106,7 +114,21 @@ export default function Plans() {
 
   async function fetchContactCustomers() {
     const contactCustomers = await ContactCustomerService.getAll();
+    contactCustomers.forEach((contactCustomer: ContactCustomer) => {
+      contactCustomer.contact.fullName = `${contactCustomer.contact.firstName} ${contactCustomer.contact.lastName}`;
+      contactCustomer.label = `${contactCustomer.contact.fullName} for ${contactCustomer.customer.name}`;
+    });
     setContactCustomers(contactCustomers);
+  }
+
+  async function fetchUsers() {
+    const users = await UserService.getAll();
+    users.forEach((user: User) => {
+      user.fullName = `${user.firstName} ${user.lastName}`;
+      user.departmentId = user.department.id;
+      delete user.department;
+    });
+    setUsers(users);
   }
 
   const header = () => {
@@ -124,6 +146,11 @@ export default function Plans() {
     const newValue = event.target.value;
     setGlobalSearchValue(newValue);
     const newPlans = await PlanService.search(newValue);
+    newPlans.forEach((plan: Plan) => {
+      if (plan.user)
+        plan.user.fullName = `${plan.user.firstName} ${plan.user.lastName}`;
+      plan.contactCustomer.contact.fullName = `${plan.contactCustomer.contact.firstName} ${plan.contactCustomer.contact.lastName}`;
+    });
     setPlans(newPlans);
   }
 
@@ -219,7 +246,7 @@ export default function Plans() {
     setSubmitted(true);
     if (
       plan.date &&
-      plan.contactCustomer &&
+      plan.contactCustomer.contact.firstName &&
       plan.how?.trim() &&
       plan.objective?.trim() &&
       plan.output?.trim() &&
@@ -276,6 +303,8 @@ export default function Plans() {
         <>
           <Toast ref={toast} />
           <DataTable
+            resizableColumns
+            columnResizeMode="expand"
             ref={dt}
             value={plans}
             removableSort
@@ -302,7 +331,12 @@ export default function Plans() {
             rowsPerPageOptions={[5, 10, 25, 50]}
             emptyMessage="No plans found."
           >
-            <Column field="date" header="Date" sortable />
+            <Column
+              field="date"
+              header="Date"
+              body={(rowData) => new Date(rowData.date).toLocaleDateString()}
+              sortable
+            />
             <Column
               field="user"
               header="User"
@@ -312,14 +346,8 @@ export default function Plans() {
             />
             <Column
               field="contactCustomer"
-              header="Contact"
-              body={(rowData) => rowData.contactCustomer.contact.fullName}
-              sortable
-            />
-            <Column
-              field="contactCustomer"
-              header="Customer"
-              body={(rowData) => rowData.contactCustomer.customer.name}
+              header="Contact Customer"
+              body={(rowData) => rowData.contactCustomer.label}
               sortable
             />
             <Column field="how" header="How" sortable />
@@ -329,14 +357,23 @@ export default function Plans() {
             <Column field="meeting" header="Meeting" sortable />
             <Column field="status" header="Status" sortable />
             <Column field="note" header="Note" sortable />
-            <Column field="completedAt" header="Completed At" sortable />
+            <Column
+              field="completedAt"
+              header="Completed At"
+              body={(rowData) =>
+                rowData.completedAt
+                  ? new Date(rowData.completedAt).toLocaleDateString()
+                  : "Unspecified"
+              }
+              sortable
+            />
             <Column
               body={actionBodyTemplate}
               exportable={false}
               className="w-10"
             />
           </DataTable>
-          {/* <Dialog
+          <Dialog
             visible={planDialog}
             style={{ width: "40rem" }}
             breakpoints={{ "960px": "75vw", "641px": "90vw" }}
@@ -346,98 +383,195 @@ export default function Plans() {
             onHide={hideDialog}
           >
             <div className="field py-2 flex items-center gap-4">
-              <label htmlFor="firstName" className="font-bold basis-1/3">
-                First Name
+              <label htmlFor="date" className="font-bold basis-1/3">
+                Date
               </label>
-              <InputText
-                id="firstName"
-                value={plan.firstName}
+              <Calendar
+                id="date"
+                value={plan.date ? new Date(plan.date) : new Date()}
                 onChange={(event) =>
-                  setPlan({ ...plan, firstName: event.target.value })
+                  setPlan({ ...plan, date: event.target.value })
                 }
                 required
                 autoFocus
                 className={classNames("w-1/2", {
-                  "p-invalid": submitted && !plan.firstName,
+                  "p-invalid": submitted && !plan.date,
                 })}
               />
-              {submitted && !plan.firstName && (
-                <small className="p-error">First name is required.</small>
+              {submitted && !plan.date && (
+                <small className="p-error">Date is required.</small>
               )}
             </div>
             <div className="field py-2 flex items-center gap-4">
-              <label htmlFor="lastName" className="font-bold basis-1/3">
-                Last Name
-              </label>
-              <InputText
-                id="lastName"
-                value={plan.lastName}
-                onChange={(event) =>
-                  setPlan({ ...plan, lastName: event.target.value })
-                }
-                required
-                className={classNames("w-1/2", {
-                  "p-invalid": submitted && !plan.lastName,
-                })}
-              />
-              {submitted && !plan.lastName && (
-                <small className="p-error">Last name is required.</small>
-              )}
-            </div>
-            <div className="field py-2 flex items-center gap-4">
-              <label htmlFor="email" className="font-bold basis-1/3">
-                Email
-              </label>
-              <InputText
-                id="email"
-                value={plan.email}
-                onChange={(event) =>
-                  setPlan({ ...plan, email: event.target.value })
-                }
-                required
-                className={classNames("w-1/2", {
-                  "p-invalid":
-                    submitted && (!plan.email || !isValidEmail(plan.email)),
-                })}
-              />
-              {submitted && (!plan.email || !isValidEmail(plan.email)) && (
-                <small className="p-error">Email is required or invalid.</small>
-              )}
-            </div>
-            <div className="field py-2 flex items-center gap-4">
-              <label htmlFor="phoneNumber" className="font-bold basis-1/3">
-                Phone number
-              </label>
-              <InputText
-                id="phoneNumber"
-                value={plan.phoneNumber}
-                onChange={(event) =>
-                  setPlan({ ...plan, phoneNumber: event.target.value })
-                }
-                required
-                className={classNames("w-1/2", {
-                  "p-invalid": submitted && !plan.phoneNumber,
-                })}
-              />
-              {submitted && !plan.phoneNumber && (
-                <small className="p-error">Phone number is required.</small>
-              )}
-            </div>
-            <div className="field py-2 flex items-center gap-4">
-              <label htmlFor="department" className="font-bold basis-1/3">
-                ContactCustomer
+              <label htmlFor="user" className="font-bold basis-1/3">
+                User
               </label>
               <Dropdown
-                value={plan.department}
+                value={plan.user}
                 onChange={(event) =>
-                  setPlan({ ...plan, department: event.target.value })
+                  setPlan({ ...plan, user: event.target.value })
                 }
-                options={contactCustomers}
-                optionLabel="name"
-                placeholder="Select a ContactCustomer"
+                options={users}
+                optionLabel="fullName"
+                placeholder="Select a User"
                 filter
                 className="w-1/2"
               />
+            </div>
+            <div className="field py-2 flex items-center gap-4">
+              <label htmlFor="contactCustomer" className="font-bold basis-1/3">
+                Contact Customer
+              </label>
+              <Dropdown
+                value={plan.contactCustomer}
+                onChange={(event) =>
+                  setPlan({ ...plan, contactCustomer: event.target.value })
+                }
+                options={contactCustomers}
+                optionLabel="label"
+                placeholder="Select a Contact Customer"
+                filter
+                className={classNames("w-1/2", {
+                  "p-invalid":
+                    submitted && !plan.contactCustomer.contact.firstName,
+                })}
+              />
+              {submitted && !plan.contactCustomer.contact.firstName && (
+                <small className="p-error">Contact Customer is required.</small>
+              )}
+            </div>
+            <div className="field py-2 flex items-center gap-4">
+              <label htmlFor="how" className="font-bold basis-1/3">
+                How
+              </label>
+              <InputText
+                id="how"
+                value={plan.how}
+                onChange={(event) =>
+                  setPlan({ ...plan, how: event.target.value })
+                }
+                required
+                className={classNames("w-1/2", {
+                  "p-invalid": submitted && !plan.how,
+                })}
+              />
+              {submitted && !plan.how && (
+                <small className="p-error">How is required.</small>
+              )}
+            </div>
+            <div className="field py-2 flex items-center gap-4">
+              <label htmlFor="objective" className="font-bold basis-1/3">
+                Objective
+              </label>
+              <InputText
+                id="objective"
+                value={plan.objective}
+                onChange={(event) =>
+                  setPlan({ ...plan, objective: event.target.value })
+                }
+                required
+                className={classNames("w-1/2", {
+                  "p-invalid": submitted && !plan.objective,
+                })}
+              />
+              {submitted && !plan.objective && (
+                <small className="p-error">Objective is required.</small>
+              )}
+            </div>
+            <div className="field py-2 flex items-center gap-4">
+              <label htmlFor="output" className="font-bold basis-1/3">
+                Output
+              </label>
+              <InputText
+                id="output"
+                value={plan.output}
+                onChange={(event) =>
+                  setPlan({ ...plan, output: event.target.value })
+                }
+                required
+                className={classNames("w-1/2", {
+                  "p-invalid": submitted && !plan.output,
+                })}
+              />
+              {submitted && !plan.output && (
+                <small className="p-error">Output is required.</small>
+              )}
+            </div>
+            <div className="field py-2 flex items-center gap-4">
+              <label htmlFor="offer" className="font-bold basis-1/3">
+                Offer
+              </label>
+              <InputText
+                id="offer"
+                value={plan.offer}
+                onChange={(event) =>
+                  setPlan({ ...plan, offer: event.target.value })
+                }
+                required
+                className={classNames("w-1/2", {
+                  "p-invalid": submitted && !plan.offer,
+                })}
+              />
+              {submitted && !plan.offer && (
+                <small className="p-error">Offer is required.</small>
+              )}
+            </div>
+            <div className="field py-2 flex items-center gap-4">
+              <label htmlFor="meeting" className="font-bold basis-1/3">
+                meeting
+              </label>
+              <InputText
+                id="meeting"
+                value={plan.meeting}
+                onChange={(event) =>
+                  setPlan({ ...plan, meeting: event.target.value })
+                }
+                required
+                className={classNames("w-1/2", {
+                  "p-invalid": submitted && !plan.meeting,
+                })}
+              />
+              {submitted && !plan.meeting && (
+                <small className="p-error">meeting is required.</small>
+              )}
+            </div>
+            <div className="field py-2 flex items-center gap-4">
+              <label htmlFor="status" className="font-bold basis-1/3">
+                Status
+              </label>
+              <InputText
+                id="status"
+                value={plan.status}
+                onChange={(event) =>
+                  setPlan({ ...plan, status: event.target.value })
+                }
+                required
+                className={classNames("w-1/2", {
+                  "p-invalid": submitted && !plan.status,
+                })}
+              />
+              {submitted && !plan.status && (
+                <small className="p-error">Status is required.</small>
+              )}
+            </div>
+            <div className="field py-2 flex items-center gap-4">
+              <label htmlFor="note" className="font-bold basis-1/3">
+                Note
+              </label>
+              <InputTextarea
+                id="note"
+                value={plan.note}
+                onChange={(event) =>
+                  setPlan({ ...plan, note: event.target.value })
+                }
+                required
+                className={classNames("w-1/2", {
+                  "p-invalid": submitted && !plan.note,
+                })}
+              />
+              {submitted && !plan.note && (
+                <small className="p-error">Note is required.</small>
+              )}
             </div>
           </Dialog>
           <DeleteDialog
@@ -447,8 +581,8 @@ export default function Plans() {
             onConfirmDelete={deletePlan}
             entity={plan}
             entityName="plan"
-            entityDisplay={plan.fullName}
-          /> */}
+            entityDisplay={plan.contactCustomer.customer.name}
+          />
         </>
       )}
     </AuthLayout>

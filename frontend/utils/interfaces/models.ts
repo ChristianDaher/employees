@@ -19,7 +19,8 @@ export interface User {
   fullName: string;
   phoneNumber: string;
   email: string;
-  department: Department;
+  department?: Department;
+  departmentId?: bigint;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -31,7 +32,8 @@ export interface Customer {
   note?: string;
   customerCode: string;
   accountNumber: string;
-  region: Region;
+  region?: Region;
+  regionId?: bigint;
   contacts: Contact[];
   createdAt?: Date;
   updatedAt?: Date;
@@ -47,7 +49,8 @@ export interface Contact {
   email: string;
   title?: string;
   note?: string;
-  department: Department;
+  department?: Department;
+  departmentId?: bigint;
   customers: Customer[];
   createdAt?: Date;
   updatedAt?: Date;
@@ -55,6 +58,7 @@ export interface Contact {
 
 export interface ContactCustomer {
   id?: bigint;
+  label?: string;
   contact: Contact;
   customer: Customer;
   createdAt?: Date;
@@ -64,7 +68,7 @@ export interface ContactCustomer {
 export interface Plan {
   id?: bigint;
   date: Date;
-  user: User;
+  user: User | null;
   contactCustomer: ContactCustomer;
   how: string;
   objective: string;

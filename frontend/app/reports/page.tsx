@@ -4,7 +4,7 @@ import AuthLayout from "@/components/layouts/auth.layout";
 import Loading from "@/components/loading";
 import { classNames } from "primereact/utils";
 import { useEffect, useRef, useState, useContext } from "react";
-import { User, Department } from "@/utils/interfaces/models";
+import { Plan, ContactCustomer, User } from "@/utils/interfaces/models";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Button } from "primereact/button";
@@ -14,53 +14,121 @@ import CustomDatatableHeader from "@/components/custom-datatable/header";
 import { InputText } from "primereact/inputtext";
 import { NavbarContext } from "@/components/contexts/navbar.context";
 import DeleteDialog from "@/components/custom-datatable/dialog-delete";
+import PlanService from "@/services/plan.service";
 import UserService from "@/services/user.service";
-import DepartmentService from "@/services/department.service";
+import ContactCustomerService from "@/services/contact-customer.service";
 import { Dropdown } from "primereact/dropdown";
-import { saveAsExcelFile, isValidEmail } from "@/utils/helpers";
+import { saveAsExcelFile } from "@/utils/helpers";
+import { Calendar } from "primereact/calendar";
+import { InputTextarea } from "primereact/inputtextarea";
 
-const emptyUser: User = {
-  firstName: "",
-  lastName: "",
-  fullName: "",
-  phoneNumber: "",
-  email: "",
-  department: {
-    name: "",
+const emptyPlan: Plan = {
+  date: new Date(),
+  user: {
+    firstName: "",
+    lastName: "",
+    fullName: "",
+    phoneNumber: "",
+    email: "",
+    department: {
+      name: "",
+    },
   },
+  contactCustomer: {
+    contact: {
+      firstName: "",
+      lastName: "",
+      fullName: "",
+      KOL: false,
+      phoneNumber: "",
+      email: "",
+      title: "",
+      note: "",
+      department: {
+        name: "",
+      },
+      customers: [],
+    },
+    customer: {
+      name: "",
+      phoneNumber: "",
+      note: "",
+      customerCode: "",
+      accountNumber: "",
+      region: {
+        name: "",
+      },
+      contacts: [],
+    },
+  },
+  how: "",
+  objective: "",
+  output: "",
+  offer: "",
+  meeting: "",
+  status: "",
+  note: "",
+  completedAt: new Date(),
 };
 
-export default function Users() {
+export default function Plans() {
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [plan, setPlan] = useState<Plan>(emptyPlan);
   const [users, setUsers] = useState<User[]>([]);
-  const [user, setUser] = useState<User>(emptyUser);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [userDialog, setUserDialog] = useState<boolean>(false);
-  const [deleteUserDialog, setDeleteUserDialog] = useState<boolean>(false);
+  const [contactCustomers, setContactCustomers] = useState<ContactCustomer[]>(
+    []
+  );
+  const [planDialog, setPlanDialog] = useState<boolean>(false);
+  const [deletePlanDialog, setDeletePlanDialog] = useState<boolean>(false);
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [globalSearchValue, setGlobalSearchValue] = useState<string>("");
   const toast = useRef<Toast>(null);
-  const dt = useRef<DataTable<User[]>>(null);
+  const dt = useRef<DataTable<Plan[]>>(null);
   const { setTitle } = useContext(NavbarContext);
 
   useEffect(() => {
-    setTitle("Users");
+    setTitle("Plans");
+    fetchPlans();
     fetchUsers();
-    fetchDepartments();
+    fetchContactCustomers();
   }, []);
+
+  async function fetchPlans() {
+    const plans = await PlanService.getAll();
+    plans.forEach((plan: Plan) => {
+      if (plan.user)
+        plan.user.fullName = `${plan.user.firstName} ${plan.user.lastName}`;
+      plan.contactCustomer.contact.fullName = `${plan.contactCustomer.contact.firstName} ${plan.contactCustomer.contact.lastName}`;
+      plan.contactCustomer.label = `${plan.contactCustomer.contact.fullName} for ${plan.contactCustomer.customer.name}`;
+      plan.contactCustomer.contact.departmentId =
+        plan.contactCustomer.contact.department.id;
+      delete plan.contactCustomer.contact.department;
+      plan.contactCustomer.customer.regionId =
+        plan.contactCustomer.customer.region.id;
+      delete plan.contactCustomer.customer.region;
+    });
+    setPlans(plans);
+    setIsLoading(false);
+  }
+
+  async function fetchContactCustomers() {
+    const contactCustomers = await ContactCustomerService.getAll();
+    contactCustomers.forEach((contactCustomer: ContactCustomer) => {
+      contactCustomer.contact.fullName = `${contactCustomer.contact.firstName} ${contactCustomer.contact.lastName}`;
+      contactCustomer.label = `${contactCustomer.contact.fullName} for ${contactCustomer.customer.name}`;
+    });
+    setContactCustomers(contactCustomers);
+  }
 
   async function fetchUsers() {
     const users = await UserService.getAll();
     users.forEach((user: User) => {
       user.fullName = `${user.firstName} ${user.lastName}`;
+      user.departmentId = user.department.id;
+      delete user.department;
     });
     setUsers(users);
-    setIsLoading(false);
-  }
-
-  async function fetchDepartments() {
-    const departments = await DepartmentService.getAll();
-    setDepartments(departments);
   }
 
   const header = () => {
@@ -77,142 +145,136 @@ export default function Users() {
   async function search(event: React.ChangeEvent<HTMLInputElement>) {
     const newValue = event.target.value;
     setGlobalSearchValue(newValue);
-    const newUsers = await UserService.search(newValue);
-    setUsers(newUsers);
+    const newPlans = await PlanService.search(newValue);
+    newPlans.forEach((plan: Plan) => {
+      if (plan.user)
+        plan.user.fullName = `${plan.user.firstName} ${plan.user.lastName}`;
+      plan.contactCustomer.contact.fullName = `${plan.contactCustomer.contact.firstName} ${plan.contactCustomer.contact.lastName}`;
+    });
+    setPlans(newPlans);
   }
 
   function openNew() {
-    setUser(emptyUser);
+    setPlan(emptyPlan);
     setSubmitted(false);
-    setUserDialog(true);
+    setPlanDialog(true);
   }
 
   function hideDialog() {
     setSubmitted(false);
-    setUserDialog(false);
+    setPlanDialog(false);
   }
 
-  function hideDeleteUserDialog() {
-    setDeleteUserDialog(false);
+  function hideDeletePlanDialog() {
+    setDeletePlanDialog(false);
   }
 
-  function editUser(user: User) {
-    setUser({ ...user });
-    setUserDialog(true);
+  function editPlan(plan: Plan) {
+    setPlan({ ...plan });
+    setPlanDialog(true);
   }
 
-  function confirmDeleteUser(user: User) {
-    setUser(user);
-    setDeleteUserDialog(true);
+  function confirmDeletePlan(plan: Plan) {
+    setPlan(plan);
+    setDeletePlanDialog(true);
   }
 
   function exportExcel() {
     import("xlsx").then((xlsx) => {
-      const simpleUsers = users.map((user) => {
-        const {
-          id,
-          firstName,
-          lastName,
-          fullName,
-          phoneNumber,
-          email,
-          department,
-          ...otherProps
-        } = user;
+      const simplePlans = plans.map((plan) => {
+        const { id, ...otherProps } = plan;
         return {
-          firstName,
-          lastName,
-          fullName,
-          phoneNumber,
-          email,
-          department: user.department?.name ?? "Unspecified",
           ...otherProps,
         };
       });
-      const worksheet = xlsx.utils.json_to_sheet(simpleUsers);
+      const worksheet = xlsx.utils.json_to_sheet(simplePlans);
       const workbook = {
-        Sheets: { users: worksheet },
-        SheetNames: ["users"],
+        Sheets: { plans: worksheet },
+        SheetNames: ["plans"],
       };
       const excelBuffer = xlsx.write(workbook, {
         bookType: "xlsx",
         type: "array",
       });
-      saveAsExcelFile(excelBuffer, "users");
+      saveAsExcelFile(excelBuffer, "plans");
     });
   }
 
-  const actionBodyTemplate = (rowData: User) => {
+  const actionBodyTemplate = (rowData: Plan) => {
     return (
       <div className="flex gap-2 items-center justify-end">
         <Button
           icon="pi pi-pencil"
           rounded
           outlined
-          onClick={() => editUser(rowData)}
+          onClick={() => editPlan(rowData)}
         />
         <Button
           icon="pi pi-trash"
           rounded
           outlined
           severity="danger"
-          onClick={() => confirmDeleteUser(rowData)}
+          onClick={() => confirmDeletePlan(rowData)}
         />
       </div>
     );
   };
 
-  async function deleteUser() {
+  async function deletePlan() {
     try {
-      const isDelete = await UserService.delete(user.id);
+      const isDelete = await PlanService.delete(plan.id);
       if (!isDelete) throw new Error();
-      setDeleteUserDialog(false);
+      setDeletePlanDialog(false);
       toast.current.show({
         severity: "success",
         summary: "Successful",
-        detail: "User Deleted",
+        detail: "Plan Deleted",
         life: 3000,
       });
-      fetchUsers();
+      fetchPlans();
     } catch (error) {
       toast.current.show({
         severity: "error",
         summary: "Error",
-        detail: "User NOT Deleted",
+        detail: "Plan NOT Deleted",
         life: 3000,
       });
     }
   }
 
-  async function saveUser() {
+  async function savePlan() {
     setSubmitted(true);
     if (
-      user.firstName?.trim() &&
-      user.lastName?.trim() &&
-      user.email?.trim() &&
-      isValidEmail(user.email) &&
-      user.phoneNumber?.trim()
+      plan.date &&
+      plan.contactCustomer.contact.firstName &&
+      plan.how?.trim() &&
+      plan.objective?.trim() &&
+      plan.output?.trim() &&
+      plan.offer?.trim() &&
+      plan.meeting?.trim() &&
+      plan.status?.trim() &&
+      plan.note?.trim()
     ) {
       try {
-        if (user.id) {
-          await UserService.update(user);
+        if (plan.id) {
+          await PlanService.update(plan);
           toast.current.show({
             severity: "success",
             summary: "Successful",
-            detail: "User Updated",
+            detail: "Plan Updated",
             life: 3000,
           });
         } else {
-          await UserService.create(user);
+          await PlanService.create(plan);
           toast.current.show({
             severity: "success",
             summary: "Successful",
-            detail: "User Created",
+            detail: "Plan Created",
             life: 3000,
           });
         }
-        fetchUsers();
-        setUserDialog(false);
+        fetchPlans();
+        setPlanDialog(false);
       } catch (error) {
         toast.current.show({
           severity: "error",
@@ -224,10 +286,10 @@ export default function Users() {
     }
   }
 
-  const userDialogFooter = (
+  const planDialogFooter = (
     <>
       <Button label="Cancel" icon="pi pi-times" outlined onClick={hideDialog} />
-      <Button label="Save" icon="pi pi-check" onClick={saveUser} />
+      <Button label="Save" icon="pi pi-check" onClick={savePlan} />
     </>
   );
 
@@ -241,36 +303,69 @@ export default function Users() {
         <>
           <Toast ref={toast} />
           <DataTable
+            resizableColumns
+            columnResizeMode="expand"
             ref={dt}
-            value={users}
+            value={plans}
             removableSort
             dataKey="id"
             loading={isLoading}
             header={header}
             globalFilterFields={[
-              "firstName",
-              "lastName",
-              "email",
-              "phoneNumber",
-              "department",
+              "date",
+              "user",
+              "contactCustomer",
+              "how",
+              "objective",
+              "output",
+              "offer",
+              "meeting",
+              "status",
+              "note",
+              "completedAt",
             ]}
             paginator
             paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} users"
+            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} plans"
             rows={5}
             rowsPerPageOptions={[5, 10, 25, 50]}
-            emptyMessage="No users found."
+            emptyMessage="No plans found."
           >
-            <Column field="firstName" header="First Name" sortable />
-            <Column field="lastName" header="Last Name" sortable />
-            <Column field="email" header="Email" sortable />
-            <Column field="phoneNumber" header="Phone Number" sortable />
             <Column
-              field="department"
-              header="Department"
-              body={(rowData) => rowData.department?.name ?? "Unspecified"}
+              field="date"
+              header="Date"
+              body={(rowData) => new Date(rowData.date).toLocaleDateString()}
               sortable
-              sortField="department.name"
+            />
+            <Column
+              field="user"
+              header="User"
+              body={(rowData) => rowData.user?.fullName ?? "Unspecified"}
+              sortable
+              sortField="user.fullName"
+            />
+            <Column
+              field="contactCustomer"
+              header="Contact Customer"
+              body={(rowData) => rowData.contactCustomer.label}
+              sortable
+            />
+            <Column field="how" header="How" sortable />
+            <Column field="objective" header="Objective" sortable />
+            <Column field="output" header="output" sortable />
+            <Column field="offer" header="Offer" sortable />
+            <Column field="meeting" header="Meeting" sortable />
+            <Column field="status" header="Status" sortable />
+            <Column field="note" header="Note" sortable />
+            <Column
+              field="completedAt"
+              header="Completed At"
+              body={(rowData) =>
+                rowData.completedAt
+                  ? new Date(rowData.completedAt).toLocaleDateString()
+                  : "Unspecified"
+              }
+              sortable
             />
             <Column
               body={actionBodyTemplate}
@@ -279,117 +374,214 @@ export default function Users() {
             />
           </DataTable>
           <Dialog
-            visible={userDialog}
+            visible={planDialog}
             style={{ width: "40rem" }}
             breakpoints={{ "960px": "75vw", "641px": "90vw" }}
-            header="User Details"
+            header="Plan Details"
             modal
-            footer={userDialogFooter}
+            footer={planDialogFooter}
             onHide={hideDialog}
           >
             <div className="field py-2 flex items-center gap-4">
-              <label htmlFor="firstName" className="font-bold basis-1/3">
-                First Name
+              <label htmlFor="date" className="font-bold basis-1/3">
+                Date
               </label>
-              <InputText
-                id="firstName"
-                value={user.firstName}
+              <Calendar
+                id="date"
+                value={plan.date ? new Date(plan.date) : new Date()}
                 onChange={(event) =>
-                  setUser({ ...user, firstName: event.target.value })
+                  setPlan({ ...plan, date: event.target.value })
                 }
                 required
                 autoFocus
                 className={classNames("w-1/2", {
-                  "p-invalid": submitted && !user.firstName,
+                  "p-invalid": submitted && !plan.date,
                 })}
               />
-              {submitted && !user.firstName && (
-                <small className="p-error">First name is required.</small>
+              {submitted && !plan.date && (
+                <small className="p-error">Date is required.</small>
               )}
             </div>
             <div className="field py-2 flex items-center gap-4">
-              <label htmlFor="lastName" className="font-bold basis-1/3">
-                Last Name
-              </label>
-              <InputText
-                id="lastName"
-                value={user.lastName}
-                onChange={(event) =>
-                  setUser({ ...user, lastName: event.target.value })
-                }
-                required
-                className={classNames("w-1/2", {
-                  "p-invalid": submitted && !user.lastName,
-                })}
-              />
-              {submitted && !user.lastName && (
-                <small className="p-error">Last name is required.</small>
-              )}
-            </div>
-            <div className="field py-2 flex items-center gap-4">
-              <label htmlFor="email" className="font-bold basis-1/3">
-                Email
-              </label>
-              <InputText
-                id="email"
-                value={user.email}
-                onChange={(event) =>
-                  setUser({ ...user, email: event.target.value })
-                }
-                required
-                className={classNames("w-1/2", {
-                  "p-invalid":
-                    submitted && (!user.email || !isValidEmail(user.email)),
-                })}
-              />
-              {submitted && (!user.email || !isValidEmail(user.email)) && (
-                <small className="p-error">Email is required or invalid.</small>
-              )}
-            </div>
-            <div className="field py-2 flex items-center gap-4">
-              <label htmlFor="phoneNumber" className="font-bold basis-1/3">
-                Phone number
-              </label>
-              <InputText
-                id="phoneNumber"
-                value={user.phoneNumber}
-                onChange={(event) =>
-                  setUser({ ...user, phoneNumber: event.target.value })
-                }
-                required
-                className={classNames("w-1/2", {
-                  "p-invalid": submitted && !user.phoneNumber,
-                })}
-              />
-              {submitted && !user.phoneNumber && (
-                <small className="p-error">Phone number is required.</small>
-              )}
-            </div>
-            <div className="field py-2 flex items-center gap-4">
-              <label htmlFor="department" className="font-bold basis-1/3">
-                Department
+              <label htmlFor="user" className="font-bold basis-1/3">
+                User
               </label>
               <Dropdown
-                value={user.department}
+                value={plan.user}
                 onChange={(event) =>
-                  setUser({ ...user, department: event.target.value })
+                  setPlan({ ...plan, user: event.target.value })
                 }
-                options={departments}
-                optionLabel="name"
-                placeholder="Select a Department"
+                options={users}
+                optionLabel="fullName"
+                placeholder="Select a User"
                 filter
                 className="w-1/2"
               />
             </div>
+            <div className="field py-2 flex items-center gap-4">
+              <label htmlFor="contactCustomer" className="font-bold basis-1/3">
+                Contact Customer
+              </label>
+              <Dropdown
+                value={plan.contactCustomer}
+                onChange={(event) =>
+                  setPlan({ ...plan, contactCustomer: event.target.value })
+                }
+                options={contactCustomers}
+                optionLabel="label"
+                placeholder="Select a Contact Customer"
+                filter
+                className={classNames("w-1/2", {
+                  "p-invalid":
+                    submitted && !plan.contactCustomer.contact.firstName,
+                })}
+              />
+              {submitted && !plan.contactCustomer.contact.firstName && (
+                <small className="p-error">Contact Customer is required.</small>
+              )}
+            </div>
+            <div className="field py-2 flex items-center gap-4">
+              <label htmlFor="how" className="font-bold basis-1/3">
+                How
+              </label>
+              <InputText
+                id="how"
+                value={plan.how}
+                onChange={(event) =>
+                  setPlan({ ...plan, how: event.target.value })
+                }
+                required
+                className={classNames("w-1/2", {
+                  "p-invalid": submitted && !plan.how,
+                })}
+              />
+              {submitted && !plan.how && (
+                <small className="p-error">How is required.</small>
+              )}
+            </div>
+            <div className="field py-2 flex items-center gap-4">
+              <label htmlFor="objective" className="font-bold basis-1/3">
+                Objective
+              </label>
+              <InputText
+                id="objective"
+                value={plan.objective}
+                onChange={(event) =>
+                  setPlan({ ...plan, objective: event.target.value })
+                }
+                required
+                className={classNames("w-1/2", {
+                  "p-invalid": submitted && !plan.objective,
+                })}
+              />
+              {submitted && !plan.objective && (
+                <small className="p-error">Objective is required.</small>
+              )}
+            </div>
+            <div className="field py-2 flex items-center gap-4">
+              <label htmlFor="output" className="font-bold basis-1/3">
+                Output
+              </label>
+              <InputText
+                id="output"
+                value={plan.output}
+                onChange={(event) =>
+                  setPlan({ ...plan, output: event.target.value })
+                }
+                required
+                className={classNames("w-1/2", {
+                  "p-invalid": submitted && !plan.output,
+                })}
+              />
+              {submitted && !plan.output && (
+                <small className="p-error">Output is required.</small>
+              )}
+            </div>
+            <div className="field py-2 flex items-center gap-4">
+              <label htmlFor="offer" className="font-bold basis-1/3">
+                Offer
+              </label>
+              <InputText
+                id="offer"
+                value={plan.offer}
+                onChange={(event) =>
+                  setPlan({ ...plan, offer: event.target.value })
+                }
+                required
+                className={classNames("w-1/2", {
+                  "p-invalid": submitted && !plan.offer,
+                })}
+              />
+              {submitted && !plan.offer && (
+                <small className="p-error">Offer is required.</small>
+              )}
+            </div>
+            <div className="field py-2 flex items-center gap-4">
+              <label htmlFor="meeting" className="font-bold basis-1/3">
+                meeting
+              </label>
+              <InputText
+                id="meeting"
+                value={plan.meeting}
+                onChange={(event) =>
+                  setPlan({ ...plan, meeting: event.target.value })
+                }
+                required
+                className={classNames("w-1/2", {
+                  "p-invalid": submitted && !plan.meeting,
+                })}
+              />
+              {submitted && !plan.meeting && (
+                <small className="p-error">meeting is required.</small>
+              )}
+            </div>
+            <div className="field py-2 flex items-center gap-4">
+              <label htmlFor="status" className="font-bold basis-1/3">
+                Status
+              </label>
+              <InputText
+                id="status"
+                value={plan.status}
+                onChange={(event) =>
+                  setPlan({ ...plan, status: event.target.value })
+                }
+                required
+                className={classNames("w-1/2", {
+                  "p-invalid": submitted && !plan.status,
+                })}
+              />
+              {submitted && !plan.status && (
+                <small className="p-error">Status is required.</small>
+              )}
+            </div>
+            <div className="field py-2 flex items-center gap-4">
+              <label htmlFor="note" className="font-bold basis-1/3">
+                Note
+              </label>
+              <InputTextarea
+                id="note"
+                value={plan.note}
+                onChange={(event) =>
+                  setPlan({ ...plan, note: event.target.value })
+                }
+                required
+                className={classNames("w-1/2", {
+                  "p-invalid": submitted && !plan.note,
+                })}
+              />
+              {submitted && !plan.note && (
+                <small className="p-error">Note is required.</small>
+              )}
+            </div>
           </Dialog>
           <DeleteDialog
-            visible={deleteUserDialog}
-            onHide={hideDeleteUserDialog}
-            onCancelDelete={hideDeleteUserDialog}
-            onConfirmDelete={deleteUser}
-            entity={user}
-            entityName="user"
-            entityDisplay={user.fullName}
+            visible={deletePlanDialog}
+            onHide={hideDeletePlanDialog}
+            onCancelDelete={hideDeletePlanDialog}
+            onConfirmDelete={deletePlan}
+            entity={plan}
+            entityName="plan"
+            entityDisplay={plan.contactCustomer.customer.name}
           />
         </>
       )}
