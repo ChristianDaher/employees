@@ -18,6 +18,7 @@ import UserService from "@/services/user.service";
 import DepartmentService from "@/services/department.service";
 import { Dropdown } from "primereact/dropdown";
 import { saveAsExcelFile, isValidEmail } from "@/utils/helpers";
+import { Checkbox } from "primereact/checkbox";
 
 const emptyUser: User = {
   firstName: "",
@@ -28,6 +29,8 @@ const emptyUser: User = {
   department: {
     name: "",
   },
+  password:"",
+  active:false,
 };
 
 export default function Users() {
@@ -35,6 +38,8 @@ export default function Users() {
   const [user, setUser] = useState<User>(emptyUser);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [userDialog, setUserDialog] = useState<boolean>(false);
+  const [userPasswordDialog, setUserPasswordDialog] = useState<boolean>(false);
+  const [isCreatingUser, setIsCreatingUser] = useState<boolean>(false);
   const [deleteUserDialog, setDeleteUserDialog] = useState<boolean>(false);
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -85,11 +90,14 @@ export default function Users() {
     setUser(emptyUser);
     setSubmitted(false);
     setUserDialog(true);
+    setIsCreatingUser(true)
   }
 
   function hideDialog() {
     setSubmitted(false);
     setUserDialog(false);
+    setUserPasswordDialog(false);
+    setIsCreatingUser(false)
   }
 
   function hideDeleteUserDialog() {
@@ -99,6 +107,11 @@ export default function Users() {
   function editUser(user: User) {
     setUser({ ...user });
     setUserDialog(true);
+  }
+
+  function editUserPassword(user:User){
+    setUser({...user});
+    setUserPasswordDialog(true)
   }
 
   function confirmDeleteUser(user: User) {
@@ -150,6 +163,13 @@ export default function Users() {
           rounded
           outlined
           onClick={() => editUser(rowData)}
+        />
+        <Button
+          icon="pi pi-user"
+          rounded
+          outlined
+          severity="danger"
+          onClick={() => editUserPassword(rowData)}
         />
         <Button
           icon="pi pi-trash"
@@ -213,6 +233,7 @@ export default function Users() {
         }
         fetchUsers();
         setUserDialog(false);
+        setIsCreatingUser(false)
       } catch (error) {
         toast.current.show({
           severity: "error",
@@ -224,10 +245,54 @@ export default function Users() {
     }
   }
 
+  async function savePassword(){
+    setSubmitted(true);
+    if (
+      user.password?.trim() 
+    ) {
+      try {
+        if (user.id) {
+          await UserService.update(user);
+          toast.current.show({
+            severity: "success",
+            summary: "Successful",
+            detail: "Password Updated",
+            life: 3000,
+          });
+          setUserPasswordDialog(false);
+        } else {
+          toast.current.show({
+            severity: "error",
+            summary: "Error",
+            detail: "User not Found",
+            life: 3000,
+          });
+        }
+        fetchUsers();
+        setUserPasswordDialog(false);
+      } catch (error) {
+        toast.current.show({
+          severity: "error",
+          summary: "Error",
+          detail: error.message,
+          life: 3000,
+        });
+      }
+    }
+
+  }
+
   const userDialogFooter = (
     <>
       <Button label="Cancel" icon="pi pi-times" outlined onClick={hideDialog} />
       <Button label="Save" icon="pi pi-check" onClick={saveUser} />
+    </>
+  );
+
+  const userPassDialogFooter = (
+    <>
+      <Button label="Cancel" icon="pi pi-times" outlined onClick={hideDialog} />
+      <Button label="Save" icon="pi pi-check" onClick={savePassword} />
     </>
   );
 
@@ -253,6 +318,7 @@ export default function Users() {
               "email",
               "phoneNumber",
               "department",
+              "active",
             ]}
             paginator
             paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
@@ -271,6 +337,12 @@ export default function Users() {
               body={(rowData) => rowData.department?.name ?? "Unspecified"}
               sortable
               sortField="department.name"
+            />
+            <Column
+              className="text-center"
+              field="active"
+              header="Active"
+              body={(rowData) => <Checkbox checked={rowData.active} readOnly />}
             />
             <Column
               body={actionBodyTemplate}
@@ -381,6 +453,38 @@ export default function Users() {
                 className="w-1/2"
               />
             </div>
+            <div className="field py-2 flex items-center gap-4">
+                  <label htmlFor="active" className="font-bold basis-1/3">
+                    Active
+                  </label>
+                  <Checkbox
+                    id="active"
+                    checked={user.active}
+                    onChange={(event) =>
+                      setUser({ ...user, active: event.checked })
+                    }
+                    required
+                  />
+            </div>
+            {isCreatingUser && <div className="field py-2 flex items-center gap-4">
+              <label htmlFor="password" className="font-bold basis-1/3">
+                Password
+              </label>
+              <InputText
+                id="password"
+                value={user.password}
+                onChange={(event) =>
+                  setUser({ ...user, password: event.target.value })
+                }
+                required
+                className={classNames("w-1/2", {
+                  "p-invalid": submitted && !user.password,
+                })}
+              />
+              {submitted && !user.password && (
+                <small className="p-error">Password is required.</small>
+              )}
+            </div>}
           </Dialog>
           <DeleteDialog
             visible={deleteUserDialog}
@@ -391,6 +495,35 @@ export default function Users() {
             entityName="user"
             entityDisplay={user.fullName}
           />
+          <Dialog
+            visible={userPasswordDialog}
+            style={{ width: "40rem" }}
+            breakpoints={{ "960px": "75vw", "641px": "90vw" }}
+            header="User Password"
+            modal
+            footer={userPassDialogFooter}
+            onHide={hideDialog}
+          >
+            <div className="field py-2 flex items-center gap-4">
+              <label htmlFor="password" className="font-bold basis-1/3">
+                Password
+              </label>
+              <InputText
+                id="password"
+                value={user.password}
+                onChange={(event) =>
+                  setUser({ ...user, password: event.target.value })
+                }
+                required
+                className={classNames("w-1/2", {
+                  "p-invalid": submitted && !user.password,
+                })}
+              />
+              {submitted && !user.password && (
+                <small className="p-error">Password is required.</small>
+              )}
+            </div>
+          </Dialog>
         </>
       )}
     </AuthLayout>

@@ -57,4 +57,10 @@ export default class User extends Model<
 
   @BelongsTo(() => Department)
   department!: Department;
+
+  @Column({ field: "password", type: DataType.STRING , allowNull:false})
+  password!: string
+
+  @Column({field:"active", type:DataType.BOOLEAN, allowNull: false, defaultValue: true})
+  active!: boolean;
 }

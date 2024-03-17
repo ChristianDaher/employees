@@ -2,9 +2,10 @@ import { Request, Response } from "express";
 import User from "../database/models/User.model";
 import Department from "../database/models/Department.model";
 import { ValidationError, Op } from "sequelize";
+const bcrypt = require('bcrypt');
 
 const modelFormat = {
-  attributes: { exclude: ["departmentId"] },
+  attributes: { exclude: ['departmentId','password'] },
   include: Department,
 };
 
@@ -75,6 +76,9 @@ export default class UserController {
         req.body.departmentId = department.id;
         delete req.body.department;
       } else req.body.departmentId = null;
+      let password = req.body.password
+      let hash = await bcrypt.hash(password,10)
+      req.body.password = hash
       const newUser = await User.create(req.body);
       return res.json(newUser);
     } catch (error) {
@@ -100,6 +104,11 @@ export default class UserController {
       } else req.body.departmentId = null;
       const user = await User.findByPk(req.params.id);
       if (user) {
+        if(req.body.password){
+          let password = req.body.password
+          let hash = await bcrypt.hash(password,10)
+          req.body.password = hash
+        }
         const updatedUser = await user.update(req.body);
         res.json(updatedUser);
       } else {

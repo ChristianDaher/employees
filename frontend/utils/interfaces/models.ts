@@ -23,6 +23,8 @@ export interface User {
   departmentId?: bigint;
   createdAt?: Date;
   updatedAt?: Date;
+  password:string;
+  active:boolean;
 }
 
 export interface Customer {
