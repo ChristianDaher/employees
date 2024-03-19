@@ -1,6 +1,6 @@
 import { Router } from "express";
 import PlanController from "../controllers/Plan.controller";
-
+import { Authenticate } from "../middlewares/tokens.middleware";
 const router = Router();
 
 router.get("/", PlanController.getAllPlans);

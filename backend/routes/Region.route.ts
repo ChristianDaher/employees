@@ -1,6 +1,6 @@
 import { Router } from "express";
 import RegionController from "../controllers/Region.controller";
-
+import { Authenticate } from "../middlewares/tokens.middleware";
 const router = Router();
 
 router.get("/", RegionController.getAllRegions);

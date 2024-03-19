@@ -19,6 +19,8 @@ interface UserAttributes {
   phoneNumber?: string;
   email?: string;
   departmentId?: bigint;
+  password?: string;
+  active?:boolean;
 }
 
 interface UserCreationAttributes extends Optional<UserAttributes, "id"> {}
