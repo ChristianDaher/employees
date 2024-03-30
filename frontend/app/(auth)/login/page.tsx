@@ -17,7 +17,9 @@ export default function auth() {
   }
 
   return(
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+    
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-500 to-indigo-700">
+        <div><h1 className="text-9xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-yellow-500 drop-shadow-md mb-8">CMM</h1></div>
         <div className="max-w-md w-full space-y-8 p-10 bg-white rounded-lg shadow-md">
           <div>
             <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">

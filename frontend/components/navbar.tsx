@@ -41,11 +41,12 @@ export default function Navbar() {
               <ul className="text-sm text-secondary flex flex-col gap-1 px-2">
                 {link.children.map(
                   (child: CustomLinkProps, childIndex: number) => (
-                    <li key={childIndex}>
+                    <li key={childIndex} onClick={() => setIsOpen(false)}>
                       <CustomLink
                         href={child.href}
                         title={child.title}
                         icon={child.icon}
+                        
                       />
                     </li>
                   )

@@ -9,6 +9,9 @@ export interface CustomDatatableHeaderProps {
   onClickNew: React.MouseEventHandler<HTMLButtonElement>;
   onClickExport: React.MouseEventHandler<HTMLButtonElement>;
   onSearch: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  DateRangeSearch: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  globalDateSearchValue: string;
+  haveDateSearch: Boolean;
 }
 
 export interface CustomDatatableDeleteDialogProps {

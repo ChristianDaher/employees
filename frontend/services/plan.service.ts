@@ -51,8 +51,9 @@ class PlanService implements Service<Plan> {
     return result.ok;
   }
 
-  async search(query: string) {
-    const result = await fetch(`${this.API_URL}/search?q=${query}`);
+  async search(query: string, fromDate?: string|null, toDate?: string|null) {
+    let ourQuery = new URLSearchParams({q:query, fromDate: fromDate||"", toDate: toDate||"" }).toString()
+    const result = await fetch(`${this.API_URL}/search?${ourQuery}`);
     return await result.json();
   }
 }

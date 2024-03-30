@@ -6,12 +6,18 @@ import Contact from "../database/models/Contact.model";
 import Customer from "../database/models/Customer.model";
 import Department from "../database/models/Department.model";
 import Region from "../database/models/Region.model";
-import { ValidationError, Op } from "sequelize";
+import { ValidationError, Op, fn, col } from "sequelize";
+import sequelize from "../database/sequelize";
+
 
 const modelFormat = {
   attributes: { exclude: ["userId", "contactCustomerId"] },
   include: [
-    User,
+    {
+      model: User,
+      attributes: { exclude: ["password"] },
+    },
+
     {
       model: ContactCustomer,
       include: [
@@ -26,6 +32,7 @@ const modelFormat = {
           attributes: { exclude: ["regionId"] },
         },
       ],
+
       attributes: { exclude: ["contactId", "customerId"] },
     },
   ],
@@ -38,60 +45,119 @@ export default class PlanController {
 
   static async searchPlans(req: Request, res: Response) {
     const query = req.query.q?.toString();
+    const fromDateString = req.query.fromDate?.toString();
+    const toDateString =req.query.toDate?.toString();
+    console.log('FROM DATE STRING  , TO DATE STRING  : ', fromDateString, toDateString)
+
+    let fromDate = undefined
+    let toDate = undefined
+    if (!isNaN(Date.parse(fromDateString||''))) {
+      const localDate = new Date(fromDateString || '');
+      const timezoneOffset = localDate.getTimezoneOffset() * 60000;
+      fromDate = new Date(localDate.getTime() - timezoneOffset);
+    }
+    if (!isNaN(Date.parse(toDateString||''))) {
+      const localDate = new Date(toDateString || '');
+      const timezoneOffset = localDate.getTimezoneOffset() * 60000;
+      toDate = new Date(localDate.getTime() - timezoneOffset);
+    }
+
+    console.log('FROM DATE , TO DATE : ', fromDate, toDate)
+
+    let dateFormate = {}
+    if(fromDate != undefined && toDate != undefined){
+      dateFormate = {
+        date: {
+          [Op.and]: {
+            [Op.gte]: new Date(fromDate), 
+            [Op.lte]: new Date(toDate), 
+          }
+          
+        },
+      }
+    }
+    else if(fromDate != undefined){
+      dateFormate = {
+        date: {
+          [Op.gte]: new Date(fromDate), 
+        },
+      }
+    }
+
+    console.log('DATE FORMATE ', dateFormate)
+
+    var queryFormat = {}
+    if(query !=''){
+      queryFormat={[Op.or]: {
+        how: {
+          [Op.like]: `%${query}%`,
+        },
+        objective: {
+          [Op.like]: `%${query}%`,
+        },
+        output: {
+          [Op.like]: `%${query}%`,
+        },
+        offer: {
+          [Op.like]: `%${query}%`,
+        },
+        meeting: {
+          [Op.like]: `%${query}%`,
+        },
+        status: {
+          [Op.like]: `%${query}%`,
+        },
+        note: {
+          [Op.like]: `%${query}%`,
+        },
+        "$user.first_name$": {
+          [Op.like]: `%${query}%`,
+        },
+        "$user.last_name$": {
+          [Op.like]: `%${query}%`,
+        },
+        
+        [Op.or]: [
+          sequelize.where(
+            fn('concat', col('User.first_name'), ' ', col('User.last_name')),
+            {
+              [Op.like]: `%${query}%`
+            }
+          ),
+          sequelize.where(
+            fn('concat', col('ContactCustomer.Contact.first_name'), ' ', col('ContactCustomer.Contact.last_name')),
+            {
+              [Op.like]: `%${query}%`
+            }
+          ),
+        ],
+ 
+        "$contactCustomer.contact.first_name$": {
+          [Op.like]: `%${query}%`,
+        },
+        "$contactCustomer.contact.last_name$": {
+          [Op.like]: `%${query}%`,
+        },
+        "$contactCustomer.customer.name$": {
+          [Op.like]: `%${query}%`,
+        },
+      },}
+    }
+
+    console.log("QUERY FORMAT : ", queryFormat)
+
     let plans;
-    if (!query) {
-      plans = await Plan.findAll(modelFormat);
-    } else {
+  
       plans = await Plan.findAll({
         ...modelFormat,
         where: {
-          [Op.or]: {
-            // date: {
-            //   [Op.gte]: new Date(query),
-            // },
-            how: {
-              [Op.like]: `%${query}%`,
-            },
-            objective: {
-              [Op.like]: `%${query}%`,
-            },
-            output: {
-              [Op.like]: `%${query}%`,
-            },
-            offer: {
-              [Op.like]: `%${query}%`,
-            },
-            meeting: {
-              [Op.like]: `%${query}%`,
-            },
-            status: {
-              [Op.like]: `%${query}%`,
-            },
-            note: {
-              [Op.like]: `%${query}%`,
-            },
-            // completedAt: {
-            //   [Op.gte]: new Date(query),
-            // },
-            "$user.first_name$": {
-              [Op.like]: `%${query}%`,
-            },
-            "$user.last_name$": {
-              [Op.like]: `%${query}%`,
-            },
-            "$contactCustomer.contact.first_name$": {
-              [Op.like]: `%${query}%`,
-            },
-            "$contactCustomer.contact.last_name$": {
-              [Op.like]: `%${query}%`,
-            },
-            "$contactCustomer.customer.name$": {
-              [Op.like]: `%${query}%`,
-            },
-          },
+          
+          ...dateFormate,
+          ...queryFormat,
+          
         },
       });
-    }
+    
     res.json(plans);
   }
 

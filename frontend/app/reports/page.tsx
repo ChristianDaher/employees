@@ -83,12 +83,14 @@ export default function Plans() {
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [globalSearchValue, setGlobalSearchValue] = useState<string>("");
+  const [globalDateSearchValue, setGlobalDateSearchValue] = useState<string>("");
+
   const toast = useRef<Toast>(null);
   const dt = useRef<DataTable<Plan[]>>(null);
   const { setTitle } = useContext(NavbarContext);
 
   useEffect(() => {
-    setTitle("Plans");
+    setTitle("Reports");
     fetchPlans();
     fetchUsers();
     fetchContactCustomers();
@@ -137,20 +139,40 @@ export default function Plans() {
         onClickNew={openNew}
         onClickExport={exportExcel}
         globalSearchValue={globalSearchValue}
-        onSearch={search}
+        onSearch={(event) => {
+          setGlobalSearchValue(event.target.value) 
+          search(event.target.value, globalDateSearchValue)
+        }}
+        haveDateSearch={true}
+        globalDateSearchValue={globalDateSearchValue}
+        DateRangeSearch={(event) => {
+          setGlobalDateSearchValue(event.target.value) 
+          search(globalSearchValue,event.target.value)
+        }}
       />
     );
   };
 
-  async function search(event: React.ChangeEvent<HTMLInputElement>) {
-    const newValue = event.target.value;
-    setGlobalSearchValue(newValue);
-    const newPlans = await PlanService.search(newValue);
+  async function search(searchkey:string, searchdate:string) {
+    const newValue = searchkey;
+    // console.log('GLOBAL DATE : ',  searchdate, searchkey)
+    let fromDate = ''
+    let toDate = ''
+    if(searchdate){
+      fromDate = searchdate[0]?.toString()
+      toDate = searchdate[1]?.toString()
+    }
+    
+    console.log('THE TWO DATES: ',  fromDate, toDate)
+
+    const newPlans = await PlanService.search(newValue,fromDate,toDate);
     newPlans.forEach((plan: Plan) => {
       if (plan.user)
         plan.user.fullName = `${plan.user.firstName} ${plan.user.lastName}`;
-      plan.contactCustomer.contact.fullName = `${plan.contactCustomer.contact.firstName} ${plan.contactCustomer.contact.lastName}`;
+        plan.contactCustomer.contact.fullName = `${plan.contactCustomer.contact.firstName} ${plan.contactCustomer.contact.lastName}`;
+        plan.contactCustomer.label = `${plan.contactCustomer.contact.fullName} for ${plan.contactCustomer.customer.name}`;
     });
+    console.log("PLANS ON SEARCH : ", newPlans)
     setPlans(newPlans);
   }
 
@@ -333,7 +355,7 @@ export default function Plans() {
           >
             <Column
               field="date"
-              header="Date"
+              header="Completed At"
               body={(rowData) => new Date(rowData.date).toLocaleDateString()}
               sortable
             />
@@ -352,21 +374,11 @@ export default function Plans() {
             />
             <Column field="how" header="How" sortable />
             <Column field="objective" header="Objective" sortable />
-            <Column field="output" header="output" sortable />
+            <Column field="output" header="Output" sortable />
             <Column field="offer" header="Offer" sortable />
             <Column field="meeting" header="Meeting" sortable />
             <Column field="status" header="Status" sortable />
             <Column field="note" header="Note" sortable />
-            <Column
-              field="completedAt"
-              header="Completed At"
-              body={(rowData) =>
-                rowData.completedAt
-                  ? new Date(rowData.completedAt).toLocaleDateString()
-                  : "Unspecified"
-              }
-              sortable
-            />
             <Column
               body={actionBodyTemplate}
               exportable={false}
@@ -389,8 +401,12 @@ export default function Plans() {
               <Calendar
                 id="date"
                 value={plan.date ? new Date(plan.date) : new Date()}
-                onChange={(event) =>
-                  setPlan({ ...plan, date: event.target.value })
+                onChange={(event) =>{
+                  const localDate = new Date(event.target.value || '');
+                  const timezoneOffset = localDate.getTimezoneOffset() * 60000;
+                  const date = new Date(localDate.getTime() - timezoneOffset);
+                  setPlan({ ...plan, date: date })
+                }
                 }
                 required
                 autoFocus
@@ -520,13 +536,14 @@ export default function Plans() {
               <label htmlFor="meeting" className="font-bold basis-1/3">
                 meeting
               </label>
-              <InputText
-                id="meeting"
+              <Dropdown
                 value={plan.meeting}
                 onChange={(event) =>
                   setPlan({ ...plan, meeting: event.target.value })
                 }
-                required
+                options={["Planned", "Scheduled", "Unplanned"]}
+                placeholder="Select a status"
+                filter
                 className={classNames("w-1/2", {
                   "p-invalid": submitted && !plan.meeting,
                 })}
@@ -539,20 +556,18 @@ export default function Plans() {
               <label htmlFor="status" className="font-bold basis-1/3">
                 Status
               </label>
-              <InputText
-                id="status"
+              <Dropdown
                 value={plan.status}
                 onChange={(event) =>
                   setPlan({ ...plan, status: event.target.value })
                 }
-                required
+                options={["Completed", "Postponed", "Cancelled", "Pending"]}
+                placeholder="Select a status"
+                filter
                 className={classNames("w-1/2", {
                   "p-invalid": submitted && !plan.status,
                 })}
               />
-              {submitted && !plan.status && (
-                <small className="p-error">Status is required.</small>
-              )}
             </div>
             <div className="field py-2 flex items-center gap-4">
               <label htmlFor="note" className="font-bold basis-1/3">
