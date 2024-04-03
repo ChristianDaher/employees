@@ -49,7 +49,7 @@ function Authenticate(userRoles: number[] = []) {
         return res.status(401).send({ error: "Not Authorized." });
 
       // find the user
-      let user = await User.findOne({ where: { id: token.user_id, active: true } });
+      let user = await User.findOne({ where: { id: token.user_id, active: true }, attributes:{exclude:["password"]} });
       if (!user) return res.status(401).send({ error: "Not Authorized." });
 
       req.user = user;

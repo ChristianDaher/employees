@@ -129,6 +129,11 @@ export default function Customers() {
     const newValue = event.target.value;
     setGlobalSearchValue(newValue);
     const newCustomers = await CustomerService.search(newValue);
+    newCustomers.forEach((customer: Customer) => {
+      customer.contacts.forEach((contact: Contact) => {
+        contact.fullName = `${contact.firstName} ${contact.lastName}`;
+      });
+    });
     setCustomers(newCustomers);
   }
 

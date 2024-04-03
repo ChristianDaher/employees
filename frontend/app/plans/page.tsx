@@ -4,7 +4,7 @@ import AuthLayout from "@/components/layouts/auth.layout";
 import Loading from "@/components/loading";
 import { classNames } from "primereact/utils";
 import { useEffect, useRef, useState, useContext } from "react";
-import { Plan, ContactCustomer, User } from "@/utils/interfaces/models";
+import { Plan, ContactCustomer, User, Customer, Contact } from "@/utils/interfaces/models";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Button } from "primereact/button";
@@ -78,6 +78,10 @@ export default function Plans() {
   const [contactCustomers, setContactCustomers] = useState<ContactCustomer[]>(
     []
   );
+  const [uniqueCustNames, setUniqueNames] = useState<any>([]);
+  const [uniqueContactNames, setUniqueContactNames] = useState<any>([]);
+  
+
   const [planDialog, setPlanDialog] = useState<boolean>(false);
   const [deletePlanDialog, setDeletePlanDialog] = useState<boolean>(false);
   const [submitted, setSubmitted] = useState<boolean>(false);
@@ -97,7 +101,7 @@ export default function Plans() {
   }, []);
 
   async function fetchPlans() {
-    const plans = await PlanService.getAll();
+    const plans = await PlanService.search('','plans');
     plans.forEach((plan: Plan) => {
       console.log("DATE FOR FETCHED PLAN , " , plan.date)
 
@@ -122,6 +126,13 @@ export default function Plans() {
       contactCustomer.contact.fullName = `${contactCustomer.contact.firstName} ${contactCustomer.contact.lastName}`;
       contactCustomer.label = `${contactCustomer.contact.fullName} for ${contactCustomer.customer.name}`;
     });
+
+    const uniqueCustName = new Set(contactCustomers.map(cc => cc.customer.name));
+    let uniqueNames:string[] = []
+    uniqueCustName.forEach((name) => uniqueNames.push(name))
+    setUniqueNames(uniqueNames)
+
+    console.log("CONTACT CUSTOMERS : ", contactCustomers)
     setContactCustomers(contactCustomers);
   }
 
@@ -166,13 +177,21 @@ export default function Plans() {
     
     console.log('THE TWO DATES: ',  fromDate, toDate)
 
-    const newPlans = await PlanService.search(newValue,fromDate,toDate);
+    const newPlans = await PlanService.search(newValue,'plans',fromDate,toDate);
     newPlans.forEach((plan: Plan) => {
       if (plan.user)
         plan.user.fullName = `${plan.user.firstName} ${plan.user.lastName}`;
         plan.contactCustomer.contact.fullName = `${plan.contactCustomer.contact.firstName} ${plan.contactCustomer.contact.lastName}`;
         plan.contactCustomer.label = `${plan.contactCustomer.contact.fullName} for ${plan.contactCustomer.customer.name}`;
+        plan.contactCustomer.contact.departmentId =
+        plan.contactCustomer.contact.department.id;
+        delete plan.contactCustomer.contact.department;
+        plan.contactCustomer.customer.regionId =
+        plan.contactCustomer.customer.region.id;
+        delete plan.contactCustomer.customer.region;
+  
     });
+
     console.log("PLANS ON SEARCH : ", newPlans)
     setPlans(newPlans);
   }
@@ -194,6 +213,14 @@ export default function Plans() {
   }
 
   function editPlan(plan: Plan) {
+    const uniqueCustName = new Set(contactCustomers.map(cc => {
+      if(cc.customer.name == plan.contactCustomer.customer.name){
+        return cc.contact.fullName
+      }
+    }));
+    let uniqueNames:string[] = []
+    uniqueCustName.forEach((name) => {if(name) uniqueNames.push(name)})
+    setUniqueContactNames(uniqueNames)
     setPlan({ ...plan });
     setPlanDialog(true);
   }
@@ -206,9 +233,17 @@ export default function Plans() {
   function exportExcel() {
     import("xlsx").then((xlsx) => {
       const simplePlans = plans.map((plan) => {
-        const { id, ...otherProps } = plan;
+        const {
+          id,
+          user,
+          contactCustomer,
+          ...otherProps
+        } = plan;
+        
         return {
           ...otherProps,
+          user:user?.fullName,
+          contactCustomer:contactCustomer?.label
         };
       });
       const worksheet = xlsx.utils.json_to_sheet(simplePlans);
@@ -358,7 +393,17 @@ export default function Plans() {
             <Column
               field="date"
               header="Date"
-              body={(rowData) => new Date(rowData.date).toLocaleDateString()}
+              body={(rowData:Plan) => {
+                if (rowData.date) {
+                  const date = new Date(rowData.date);
+                  const formatted = date.toLocaleDateString('en-GB', {
+                    day: '2-digit', month: 'long', year: 'numeric'
+                  });
+            
+                  return formatted;
+                }
+                return 'N/A';
+              }}
               sortable
             />
             <Column
@@ -369,9 +414,15 @@ export default function Plans() {
               sortField="user.fullName"
             />
             <Column
-              field="contactCustomer"
-              header="Contact Customer"
-              body={(rowData) => rowData.contactCustomer.label}
+              field="contact"
+              header="Contact"
+              body={(rowData) => rowData.contactCustomer.contact.fullName}
+              sortable
+            />
+            <Column
+              field="Customer"
+              header="Customer"
+              body={(rowData) => rowData.contactCustomer.customer.name}
               sortable
             />
             <Column field="how" header="How" sortable />
@@ -420,7 +471,7 @@ export default function Plans() {
                 <small className="p-error">Date is required.</small>
               )}
             </div>
-            <div className="field py-2 flex items-center gap-4">
+            {/* <div className="field py-2 flex items-center gap-4">
               <label htmlFor="user" className="font-bold basis-1/3">
                 User
               </label>
@@ -435,18 +486,79 @@ export default function Plans() {
                 filter
                 className="w-1/2"
               />
+            </div> */}
+            <div className="field py-2 flex items-center gap-4">
+              <label htmlFor="contactCustomer" className="font-bold basis-1/3">
+                Customer
+              </label>
+              <Dropdown
+                value={plan.contactCustomer.customer.name}
+                onChange={(event) =>{
+                  const CustomerContact = contactCustomers.find(obj => obj.customer.name === event.target.value);
+                  if(CustomerContact){
+                    const Customer:Customer = {...CustomerContact?.customer}
+                    console.log('TARGETED CUSTOMER : ', Customer)
+                    if(Customer){
+                      setPlan({ ...plan, contactCustomer: {
+                        customer:Customer,
+                        contact: {
+                          firstName: "",
+                          lastName: "",
+                          fullName: "",
+                          KOL: false,
+                          phoneNumber: "",
+                          email: "",
+                          title: "",
+                          note: "",
+                          department: {
+                            name: "",
+                          },
+                          customers: [],
+                        },
+                        } })
+                        const uniqueCustName = new Set(contactCustomers.map(cc => {
+                          if(cc.customer.name == event.target.value){
+                            return cc.contact.fullName
+                          }
+                        }));
+                        let uniqueNames:string[] = []
+                        uniqueCustName.forEach((name) => {if(name) uniqueNames.push(name)})
+                        setUniqueContactNames(uniqueNames)
+                    }
+                  
+                  }
+                }
+                  
+                }
+                options={uniqueCustNames}
+                placeholder="Select a Customer"
+                filter
+                className={classNames("w-1/2", {
+                  "p-invalid":
+                    submitted && !plan.contactCustomer.contact.firstName,
+                })}
+              />
+              {submitted && !plan.contactCustomer.contact.firstName && (
+                <small className="p-error">Customer is required.</small>
+              )}
             </div>
             <div className="field py-2 flex items-center gap-4">
               <label htmlFor="contactCustomer" className="font-bold basis-1/3">
-                Contact Customer
+                Contact
               </label>
               <Dropdown
-                value={plan.contactCustomer}
-                onChange={(event) =>
-                  setPlan({ ...plan, contactCustomer: event.target.value })
-                }
-                options={contactCustomers}
-                optionLabel="label"
+                value={plan.contactCustomer.contact.fullName}
+                onChange={(event) =>{
+                  const CustomerContact = contactCustomers.find(obj => obj.contact.fullName === event.target.value && obj.customer.name === plan.contactCustomer.customer.name);
+                  if(CustomerContact){
+                    setPlan({ 
+                      ...plan,contactCustomer:{ ...CustomerContact}
+                    })
+                  }
+                                   
+                }}
+                
+                options={uniqueContactNames}
                 placeholder="Select a Contact Customer"
                 filter
                 className={classNames("w-1/2", {
@@ -462,13 +574,14 @@ export default function Plans() {
               <label htmlFor="how" className="font-bold basis-1/3">
                 How
               </label>
-              <InputText
-                id="how"
+              <Dropdown
                 value={plan.how}
                 onChange={(event) =>
                   setPlan({ ...plan, how: event.target.value })
                 }
-                required
+                options={["Visit", "Phone Call", "Email"]}
+                placeholder="Select a how"
+                filter
                 className={classNames("w-1/2", {
                   "p-invalid": submitted && !plan.how,
                 })}
@@ -598,7 +711,7 @@ export default function Plans() {
             onConfirmDelete={deletePlan}
             entity={plan}
             entityName="plan"
-            entityDisplay={plan.contactCustomer.customer.name}
+            entityDisplay={plan.contactCustomer?.customer?.name}
           />
         </>
       )}

@@ -14,6 +14,12 @@ export default function Header() {
           <i className="pi pi-bars text-xl" />
         </button>
         <h1 className="text-2xl font-bold">{title}</h1>
+        <button
+          onClick={() => {window.location.href = '/login'}} // Assuming handleLogout is your logout function
+          className="ml-auto pointer-cursor rounded-full px-4 py-2 flex items-center justify-center transition duration-200 text-secondary hover:text-primary hover:bg-hover outline-none focus:ring-2 ring-accent/50"
+        >
+          Logout
+        </button>
       </header>
     </div>
   );

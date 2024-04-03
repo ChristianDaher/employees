@@ -3,11 +3,11 @@ import PlanController from "../controllers/Plan.controller";
 import { Authenticate } from "../middlewares/tokens.middleware";
 const router = Router();
 
-router.get("/", PlanController.getAllPlans);
-router.get("/search", PlanController.searchPlans);
-router.get("/:id", PlanController.getPlanById);
-router.post("/", PlanController.createPlan);
-router.put("/:id", PlanController.updatePlan);
-router.delete("/:id", PlanController.deletePlan);
+router.get("/",Authenticate() , PlanController.getAllPlans);
+router.get("/search",Authenticate() , PlanController.searchPlans);
+router.get("/:id",Authenticate() , PlanController.getPlanById);
+router.post("/",Authenticate() , PlanController.createPlan);
+router.put("/:id",Authenticate() , PlanController.updatePlan);
+router.delete("/:id",Authenticate() , PlanController.deletePlan);
 
 export default router;

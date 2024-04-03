@@ -45,6 +45,7 @@ export default class PlanController {
 
   static async searchPlans(req: Request, res: Response) {
     const query = req.query.q?.toString();
+    const page = req.query.page?.toString();
     const fromDateString = req.query.fromDate?.toString();
     const toDateString =req.query.toDate?.toString();
     console.log('FROM DATE STRING  , TO DATE STRING  : ', fromDateString, toDateString)
@@ -104,9 +105,6 @@ export default class PlanController {
         meeting: {
           [Op.like]: `%${query}%`,
         },
-        status: {
-          [Op.like]: `%${query}%`,
-        },
         note: {
           [Op.like]: `%${query}%`,
         },
@@ -144,6 +142,22 @@ export default class PlanController {
       },}
     }
 
+    var pageFormat = {}
+    if(page == 'reports'){
+      pageFormat={
+        status: {
+          [Op.in]: ['Completed', 'Cancelled']
+        },
+      }
+    }
+    else{
+      pageFormat={
+        status: {
+          [Op.in]: ['Postponed', 'Pending']
+        },
+      }
+    }
+
     console.log("QUERY FORMAT : ", queryFormat)
 
     let plans;
@@ -151,10 +165,9 @@ export default class PlanController {
       plans = await Plan.findAll({
         ...modelFormat,
         where: {
-          
           ...dateFormate,
           ...queryFormat,
-          
+          ...pageFormat,
         },
       });
     
@@ -172,14 +185,21 @@ export default class PlanController {
 
   static async createPlan(req: Request, res: Response): Promise<Response> {
     try {
-      if (req.body.user && req.body.user.id) {
-        const user = await User.findByPk(req.body.user.id);
-        if (!user) {
-          return res.status(400).json({ error: "User not found." });
-        }
-        req.body.userId = user.id;
-        delete req.body.user;
-      } else req.body.userId = null;
+      // if (req.body.user && req.body.user.id) {
+      //   const user = await User.findByPk(req.body.user.id);
+      //   if (!user) {
+      //     return res.status(400).json({ error: "User not found." });
+      //   }
+      //   req.body.userId = user.id;
+      //   delete req.body.user;
+      // } else req.body.userId = null;
+      console.log("REQ USER FROM AUTH : ", req.user)
+      if (!req.user) {
+        return res.status(400).json({ error: "User not found." });
+      }else{
+        req.body.userId = req.user.id
+        delete req.body.user
+      }
       if (req.body.contactCustomer && req.body.contactCustomer.id) {
         const contactCustomer = await ContactCustomer.findByPk(
           req.body.contactCustomer.id
@@ -199,14 +219,20 @@ export default class PlanController {
 
   static async updatePlan(req: Request<{ id: string }>, res: Response) {
     try {
-      if (req.body.user && req.body.user.id) {
-        const user = await User.findByPk(req.body.user.id);
-        if (!user) {
-          return res.status(400).json({ error: "User not found." });
-        }
-        req.body.userId = user.id;
-        delete req.body.user;
-      } else req.body.userId = null;
+      // if (req.body.user && req.body.user.id) {
+      //   const user = await User.findByPk(req.body.user.id);
+      //   if (!user) {
+      //     return res.status(400).json({ error: "User not found." });
+      //   }
+      //   req.body.userId = user.id;
+      //   delete req.body.user;
+      // } else req.body.userId = null;
+      if (!req.user) {
+        return res.status(400).json({ error: "User not found." });
+      }else{
+        req.body.userId = req.user.id
+        delete req.body.user
+      }
       if (req.body.contactCustomer && req.body.contactCustomer.id) {
         const contactCustomer = await ContactCustomer.findByPk(
           req.body.contactCustomer.id
