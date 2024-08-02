@@ -71,3 +71,10 @@ The frontend application should start at [`localhost:3000`](http://localhost:300
    ```
 
 The backend application should start at [`localhost:8080`](http://localhost:8080)
+
+## Screenshots
+
+![welcome](screenshots/welcome.png)
+![menu](screenshots/menu.png)
+![new](screenshots/new.png)
+![new2](screenshots/new2.png)
